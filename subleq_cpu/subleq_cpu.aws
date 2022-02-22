@@ -1,0 +1,12 @@
+[Version]
+Version=11.1
+[Designs]
+subleq_cpu=.\subleq_cpu.adf
+[Browser]
+sort=order
+mode=none
+[Order]
+order=1
+macro=
+[Expand]
+subleq_cpu=1
