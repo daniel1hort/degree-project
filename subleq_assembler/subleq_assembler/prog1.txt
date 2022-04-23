@@ -1,0 +1,15 @@
+.ORG 50
+b a
+.END
+
+    .YAY
+
+   a  : .DATA 4
+b: .DATA 2
+b: .DATA number
+
+6:
+
+HowAreYou?:
+
+NumeMaiLungDe16Caractere:

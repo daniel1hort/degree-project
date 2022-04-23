@@ -1,0 +1,5 @@
+.ORG 50
+b a 
+.END
+.DATA 4
+.DATA 2
