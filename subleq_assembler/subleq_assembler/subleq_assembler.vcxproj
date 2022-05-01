@@ -149,6 +149,7 @@
     <ClInclude Include="core.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="prog1.txt.bin" />
     <None Include="prog1.txt.v2" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

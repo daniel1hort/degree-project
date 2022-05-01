@@ -5,6 +5,7 @@
 #include "core.h"
 
 char filename2[SMALL_SIZE + 1];
+char filename3[SMALL_SIZE + 1];
 
 int main(int argc, char** argv) {
 	if (argc < 2) {
@@ -13,7 +14,7 @@ int main(int argc, char** argv) {
 	}
 
 	char* filename1 = argv[1];
-	FILE* file1, *file2;
+	FILE* file1, * file2, * file3;
 	fopen_s(&file1, filename1, "r");
 	if (file1 == NULL) {
 		fprintf_s(stderr, "no such file \"%s\"\n", filename1);
@@ -23,9 +24,14 @@ int main(int argc, char** argv) {
 	strcpy_s(filename2, SMALL_SIZE + 1, filename1);
 	strcat_s(filename2, SMALL_SIZE + 1, ".v2");
 	fopen_s(&file2, filename2, "w");
-
 	step1(file1, file2);
-	//step2();
+
+	strcpy_s(filename3, SMALL_SIZE + 1, filename1);
+	strcat_s(filename3, SMALL_SIZE + 1, ".bin");
+	fopen_s(&file3, filename3, "w");
+	fclose(file2);
+	freopen_s(&file2, filename2, "r", file2);
+	step2(file2, file3);
 
 	_fcloseall();
 	return 0;

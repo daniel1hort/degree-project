@@ -19,7 +19,8 @@ typedef enum error_type {
 	ERROR_NAN,
 	ERROR_INVALID_LABEL_NAME,
 	ERROR_UNKNOWN_DIRECTIVE,
-	ERROR_MULTIPLY_DEFINED_LABEL
+	ERROR_MULTIPLY_DEFINED_LABEL,
+	ERROR_LABEL_NOT_DEFINED
 } ERROR_TYPE;
 
 typedef enum directive_type {
@@ -55,11 +56,13 @@ typedef struct line_def {
 	static_ptr label;
 	DIRECTIVE_TYPE directive;
 	PARAM_DEF params[3];
+	int LC;
 } LINE_DEF;
 
 extern LABEL_DEF labels[SMALL_SIZE]; //make it dynamic or bigger
 extern int labels_count;
 
 void step1(FILE* stream1, FILE* stream2);
+void step2(FILE* stream1, FILE* stream2);
 
 #endif

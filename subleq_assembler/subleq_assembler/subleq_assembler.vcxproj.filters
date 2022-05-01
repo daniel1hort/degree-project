@@ -36,5 +36,8 @@
     <None Include="prog1.txt.v2">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="prog1.txt.bin">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

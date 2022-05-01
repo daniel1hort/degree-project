@@ -1,5 +1,6 @@
 .ORG 50
-b a 
+b a ? 
+a a ? 
 .END
 .DATA 4
 .DATA 2
