@@ -21,7 +21,10 @@ typedef enum error_type {
 	ERROR_UNKNOWN_DIRECTIVE,
 	ERROR_MULTIPLY_DEFINED_LABEL,
 	ERROR_LABEL_NOT_DEFINED,
-	ERROR_UNDEFINED_SYMBOL
+	ERROR_UNDEFINED_SYMBOL,
+	ERROR_INTERNAL_SYMBOL_REDEFINED,
+	ERROR_SYMBOL_ZERO_READONLY,
+	ERROR_SYMBOL_END_READONLY
 } ERROR_TYPE;
 
 typedef enum directive_type {
@@ -60,7 +63,7 @@ typedef struct line_def {
 	PARAM_DEF params[3];
 } LINE_DEF;
 
-extern LABEL_DEF labels[SMALL_SIZE]; //make it dynamic or bigger
+extern LABEL_DEF labels[INT16_MAX];
 extern int labels_count;
 
 void step1(FILE* stream1, FILE* stream2);

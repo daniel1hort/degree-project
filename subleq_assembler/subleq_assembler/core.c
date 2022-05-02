@@ -1,6 +1,6 @@
 #include "core.h"
 
-LABEL_DEF labels[SMALL_SIZE];
+LABEL_DEF labels[INT16_MAX];
 int labels_count;
 int failed = FALSE;
 
@@ -75,7 +75,7 @@ void line_write(LINE_DEF line, FILE* stream) {
 		fprintf_s(stream, ".ORG %lld", line.params[0].value);
 		break;
 	case DIRECTIVE_END:
-		fprintf_s(stream, ".END");
+		fprintf_s(stream, "ZERO ZERO END");
 		break;
 	case DIRECTIVE_DATA:
 		fprintf_s(stream, ".DATA %lld", line.params[0].value);
@@ -158,7 +158,37 @@ void raise_error(int line, int column, ERROR_TYPE error, const char* info) {
 	case ERROR_UNDEFINED_SYMBOL:
 		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol '%s' is undefined.\n", __TIME__, line, column, info);
 		break;
+	case ERROR_INTERNAL_SYMBOL_REDEFINED:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol '%s' is handled by the assembler.\n", __TIME__, line, column, info);
+		break;
+	case ERROR_SYMBOL_ZERO_READONLY:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol 'ZERO' is read-only.\n", __TIME__, line, column);
+		break;
+	case ERROR_SYMBOL_END_READONLY:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol 'END' is read-only.\n", __TIME__, line, column);
+		break;
 	}
+}
+
+void symbol_add_ZERO(FILE* stream) {
+	LABEL_DEF label;
+	LINE_DEF line;
+
+	label_set(&label, 0, 0, "ZERO", LABEL_STATUS_VALID, 0);
+	label_add(label);
+	line_init(&line);
+	line.directive = DIRECTIVE_DATA;
+	param_set_value(line.params + 0, 0);
+	line_write(line, stream);
+}
+
+BOOL symbol_enforce_ZERO(LINE_DEF line) {
+	return _stricmp(line.params[0].name, "ZERO") == 0 || _stricmp(line.params[1].name, "ZERO") != 0;
+}
+
+BOOL symbol_enforce_END(LINE_DEF line) {
+	return _stricmp(line.params[1].name, "END") != 0 &&
+		(_stricmp(line.params[0].name, "END") != 0 || !line.params[1].empty);
 }
 #pragma endregion
 
@@ -198,6 +228,9 @@ void step1(FILE * stream1, FILE* stream2) {
 			label_end[0] = '\0';
 			word = remove_trailing_space(buf);
 			BOOL valid = label_valid_name(word);
+
+			if (_stricmp(word, "ZERO") == 0 || _stricmp(word, "END") == 0)
+				raise_error(line_count, word - buf, ERROR_INTERNAL_SYMBOL_REDEFINED, word);
 
 			label_set(&label, line_count, word - buf, word, (valid ? LABEL_STATUS_VALID : LABEL_STATUS_INVALID), lc);
 			int label_adr = label_add(label);
@@ -264,15 +297,18 @@ void step1(FILE * stream1, FILE* stream2) {
 				word = strtok_s(next_word, " ,\t", &next_word);
 			} while (++i < 3 && word != NULL);
 
+			if (!symbol_enforce_ZERO(line))
+				raise_error(line_count, 0, ERROR_SYMBOL_ZERO_READONLY, NULL);
+			if (!symbol_enforce_END(line))
+				raise_error(line_count, 0, ERROR_SYMBOL_END_READONLY, NULL);
+
 			lc += 3;
 		}
 
 		line_write(line, stream2);
 	}
 
-	//LITERALS NOT WILL BE
-	label_set(&label, 0, 0, "ZERO", LABEL_STATUS_VALID, 0);
-	label_add(label);
+	symbol_add_ZERO(stream2);
 
 	for (int i = 0; i < labels_count; i++) {
 		switch (labels[i].status)
