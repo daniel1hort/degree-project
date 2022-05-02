@@ -337,6 +337,8 @@ void step2(FILE* stream1, FILE* stream2) {
 				}
 				param_set_value(line.params + i, value);
 			}
+
+			lc += 3;
 		}
 
 		line_parse(line, stream2);

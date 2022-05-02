@@ -56,7 +56,6 @@ typedef struct line_def {
 	static_ptr label;
 	DIRECTIVE_TYPE directive;
 	PARAM_DEF params[3];
-	int LC;
 } LINE_DEF;
 
 extern LABEL_DEF labels[SMALL_SIZE]; //make it dynamic or bigger

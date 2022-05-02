@@ -28,7 +28,7 @@ int main(int argc, char** argv) {
 
 	strcpy_s(filename3, SMALL_SIZE + 1, filename1);
 	strcat_s(filename3, SMALL_SIZE + 1, ".bin");
-	fopen_s(&file3, filename3, "w");
+	fopen_s(&file3, filename3, "wb");
 	fclose(file2);
 	freopen_s(&file2, filename2, "r", file2);
 	step2(file2, file3);
