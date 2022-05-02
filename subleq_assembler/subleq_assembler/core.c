@@ -255,7 +255,7 @@ void step1(FILE * stream1, FILE* stream2) {
 			int i = 0;
 			do {
 				BOOL valid = label_valid_name(word);
-				if (_stricmp(word, "*") != 0 || _stricmp(word, "?") != 0) { //exclude those symbols
+				if (_stricmp(word, "*") != 0 && _stricmp(word, "?") != 0) { //exclude those symbols
 					label_set(&label, line_count, word - buf, word, (valid ? LABEL_STATUS_UNDEFINED : LABEL_STATUS_INVALID), lc);
 					label_add(label);
 				}
