@@ -16,7 +16,12 @@ inline void label_set(LABEL_DEF* label, int line, int column, const char * name,
 int label_add(LABEL_DEF label) {
 	for (int i = 0; i < labels_count; i++)
 		if (_stricmp(label.name, labels[i].name) == 0) {
-			labels[i].status = LABEL_STATUS_MULTIPLY_DEFINED;
+			if (labels[i].status == LABEL_STATUS_VALID && label.status == LABEL_STATUS_VALID) {
+				labels[i].status = LABEL_STATUS_MULTIPLY_DEFINED;
+			}
+			else if (labels[i].status == LABEL_STATUS_UNDEFINED && label.status == LABEL_STATUS_VALID) {
+				labels[i].status = LABEL_STATUS_VALID;
+			}
 			return i;
 		}
 	labels[labels_count++] = label;
@@ -134,7 +139,7 @@ char* remove_trailing_space(char* name) {
 	return name + i;
 }
 
-void raise_error(int line, int column, ERROR_TYPE error, const char * info) {
+void raise_error(int line, int column, ERROR_TYPE error, const char* info) {
 	failed = TRUE;
 	switch (error)
 	{
@@ -149,6 +154,9 @@ void raise_error(int line, int column, ERROR_TYPE error, const char * info) {
 		break;
 	case ERROR_MULTIPLY_DEFINED_LABEL:
 		fprintf_s(stderr, "[%s] [error] at line %d, column %d: label '%s' is defined multiple times.\n", __TIME__, line, column, info);
+		break;
+	case ERROR_UNDEFINED_SYMBOL:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol '%s' is undefined.\n", __TIME__, line, column, info);
 		break;
 	}
 }
@@ -246,8 +254,12 @@ void step1(FILE * stream1, FILE* stream2) {
 
 			int i = 0;
 			do {
-				if (label_valid_name(word) == FALSE && _stricmp(word, "*") != 0 && _stricmp(word, "?") != 0)
-					raise_error(line_count, word - buf, ERROR_INVALID_LABEL_NAME, NULL);
+				BOOL valid = label_valid_name(word);
+				if (_stricmp(word, "*") != 0 || _stricmp(word, "?") != 0) { //exclude those symbols
+					label_set(&label, line_count, word - buf, word, (valid ? LABEL_STATUS_UNDEFINED : LABEL_STATUS_INVALID), lc);
+					label_add(label);
+				}
+
 				param_set_name(line.params + i, word);
 				word = strtok_s(next_word, " ,\t", &next_word);
 			} while (++i < 3 && word != NULL);
@@ -258,7 +270,7 @@ void step1(FILE * stream1, FILE* stream2) {
 		line_write(line, stream2);
 	}
 
-	//LITERALS WILL BE
+	//LITERALS NOT WILL BE
 	label_set(&label, 0, 0, "ZERO", LABEL_STATUS_VALID, 0);
 	label_add(label);
 
@@ -270,6 +282,9 @@ void step1(FILE * stream1, FILE* stream2) {
 			break;
 		case LABEL_STATUS_INVALID:
 			raise_error(labels[i].line, labels[i].column, ERROR_INVALID_LABEL_NAME, labels[i].name);
+			break;
+		case LABEL_STATUS_UNDEFINED:
+			raise_error(labels[i].line, labels[i].column, ERROR_UNDEFINED_SYMBOL, labels[i].name);
 			break;
 		}	
 	}
@@ -327,14 +342,7 @@ void step2(FILE* stream1, FILE* stream2) {
 				else if (_stricmp(word, "?") == 0)
 					value = lc + 3;
 				else
-				{
-					int label_id = label_get(word);
-					if (label_id == -1) { // TODO: check this in step1
-						raise_error(line_count, word - buf, ERROR_LABEL_NOT_DEFINED, word);
-						continue;
-					}
-					value = labels[label_id].value;
-				}
+					value = labels[label_get(word)].value;
 				param_set_value(line.params + i, value);
 			}
 
