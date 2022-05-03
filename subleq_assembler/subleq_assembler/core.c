@@ -59,9 +59,9 @@ BOOL label_valid_name(const char* name) {
 inline void line_init(LINE_DEF* line) {
 	line->directive = DIRECTIVE_NONE;
 	line->label = -1;
-	line->params[0].empty = TRUE;
-	line->params[1].empty = TRUE;
-	line->params[2].empty = TRUE;
+	line->params[0].status = PARAM_STATUS_EMPTY;
+	line->params[1].status = PARAM_STATUS_EMPTY;
+	line->params[2].status = PARAM_STATUS_EMPTY;
 }
 
 void line_write(LINE_DEF line, FILE* stream) {
@@ -69,8 +69,8 @@ void line_write(LINE_DEF line, FILE* stream) {
 	{
 	case DIRECTIVE_NONE:
 		fprintf_s(stream, "%s ", line.params[0].name);
-		fprintf_s(stream, "%s ", (line.params[1].empty ? line.params[0].name : line.params[1].name));
-		fprintf_s(stream, "%s ", (line.params[2].empty ? "?" : line.params[2].name));
+		fprintf_s(stream, "%s ", ((line.params[1].status == PARAM_STATUS_EMPTY) ? line.params[0].name : line.params[1].name));
+		fprintf_s(stream, "%s ", ((line.params[2].status == PARAM_STATUS_EMPTY) ? "?" : line.params[2].name));
 		break;
 	case DIRECTIVE_ORG:
 		fprintf_s(stream, ".ORG %lld", line.params[0].value);
@@ -79,7 +79,10 @@ void line_write(LINE_DEF line, FILE* stream) {
 		fprintf_s(stream, "ZERO ZERO END");
 		break;
 	case DIRECTIVE_DATA:
-		fprintf_s(stream, ".DATA %lld", line.params[0].value);
+		if ((line.params[0].status & PARAM_STATUS_VALUE) != 0)
+			fprintf_s(stream, ".DATA %lld", line.params[0].value);
+		else
+			fprintf_s(stream, ".DATA %s", line.params[0].name);
 		break;
 	}
 	fprintf_s(stream, "\n");
@@ -114,13 +117,13 @@ void line_parse(LINE_DEF line, FILE* stream) {
 }
 
 inline void param_set_value(PARAM_DEF* param, uint64_t value) {
-	param->empty = FALSE;
+	param->status |= PARAM_STATUS_VALUE;
 	param->value = value;
 }
 
 inline void param_set_name(PARAM_DEF* param, const char* name) {
-	param->empty = FALSE;
-	strcpy_s(param->name, MAX_LABEL_LENGTH, name);
+	param->status |= PARAM_STATUS_NAME;
+	strcpy_s(param->name, MAX_LABEL_LENGTH + 1, name);
 }
 #pragma endregion
 
@@ -144,8 +147,8 @@ void raise_error(int line, int column, ERROR_TYPE error, const char* info) {
 	failed = TRUE;
 	switch (error)
 	{
-	case ERROR_NAN:
-		fprintf_s(stderr, "[%s] [error] at line %d, column %d: '%s' is not a number.\n", __TIME__, line, column, info);
+	case ERROR_INVALID_DATA_PARAM:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: invalid param '%s' for directive .DATA, it only accepts numbers and valid label names\n", __TIME__, line, column, info);
 		break;
 	case ERROR_INVALID_LABEL_NAME:
 		fprintf_s(stderr, "[%s] [error] at line %d, column %d: invalid label name '%s'. A label must start with a letter, may contain digits and must be at most 16 characters long.\n", __TIME__, line, column, info);
@@ -171,11 +174,11 @@ void raise_error(int line, int column, ERROR_TYPE error, const char* info) {
 	}
 }
 
-void symbol_add_ZERO(FILE* stream) {
+void symbol_add_ZERO(FILE* stream, int64_t value) {
 	LABEL_DEF label;
 	LINE_DEF line;
 
-	label_set(&label, 0, 0, "ZERO", LABEL_STATUS_VALID, 0);
+	label_set(&label, 0, 0, "ZERO", LABEL_STATUS_VALID, value);
 	label_add(label);
 	line_init(&line);
 	line.directive = DIRECTIVE_DATA;
@@ -189,7 +192,7 @@ BOOL symbol_enforce_ZERO(LINE_DEF line) {
 
 BOOL symbol_enforce_END(LINE_DEF line) {
 	return _stricmp(line.params[1].name, "END") != 0 &&
-		(_stricmp(line.params[0].name, "END") != 0 || !line.params[1].empty);
+		(_stricmp(line.params[0].name, "END") != 0 || line.params[1].status != PARAM_STATUS_EMPTY);
 }
 #pragma endregion
 
@@ -242,7 +245,7 @@ void step1(FILE* stream1, FILE* stream2) {
 		word = ((label_end != NULL) ? (label_end + 1) : buf);
 		word = remove_trailing_space(word);
 		if (word[0] == '.') {
-			word = strtok_s(word, " ", &next_word);
+			word = strtok_s(word, " \t", &next_word);
 
 			if (_stricmp(word + 1, "ORG") == 0) {
 				int value;
@@ -261,16 +264,23 @@ void step1(FILE* stream1, FILE* stream2) {
 				lc += 3;
 			}
 			else if (_stricmp(word + 1, "DATA") == 0) {
+				word = strtok_s(next_word, " \t", &next_word);
 				int value;
-				int result = sscanf_s(next_word, "%d", &value);
-				if (result == 0) {
-					raise_error(line_count, next_word - buf, ERROR_NAN, next_word);
+				int result = sscanf_s(word, "%d", &value);
+				if (result == 1) {
+					param_set_value(line.params + 0, value);
+				}
+				else if(label_valid_name(word)) {
+					param_set_name(line.params + 0, word);
+					label_set(&label, line_count, word - buf, word, LABEL_STATUS_UNDEFINED, lc);
+					label_add(label);
+				}
+				else {
+					raise_error(line_count, next_word - buf, ERROR_INVALID_DATA_PARAM, word);
 					continue;
 				}
 
 				line.directive = DIRECTIVE_DATA;
-				param_set_value(line.params + 0, value);
-
 				lc++;
 			}
 			else {
@@ -309,7 +319,7 @@ void step1(FILE* stream1, FILE* stream2) {
 		line_write(line, stream2);
 	}
 
-	symbol_add_ZERO(stream2);
+	symbol_add_ZERO(stream2, lc);
 
 	for (int i = 0; i < labels_count; i++) {
 		switch (labels[i].status)
@@ -344,10 +354,11 @@ void step2(FILE* stream1, FILE* stream2) {
 
 		//DIRECTIVE
 		if (buf[0] == '.') {
-			word = strtok_s(buf, " ", &next_word);
+			word = strtok_s(buf, " \t", &next_word);
 			if (_stricmp(word + 1, "ORG") == 0) {
+				word = remove_trailing_space(next_word);
 				int value;
-				sscanf_s(next_word, "%d", &value);
+				sscanf_s(word, "%d", &value);
 
 				line.directive = DIRECTIVE_ORG;
 				param_set_value(line.params + 0, value);
@@ -359,17 +370,24 @@ void step2(FILE* stream1, FILE* stream2) {
 				lc += 3;
 			}
 			else if (_stricmp(word + 1, "DATA") == 0) {
+				word = remove_trailing_space(next_word);
 				int value;
-				int result = sscanf_s(next_word, "%d", &value);
-
+				int result = sscanf_s(word, "%d", &value);
+				if (result == 1) {
+					param_set_value(line.params + 0, value);
+				}
+				else {
+					value = labels[label_get(word)].value;
+					param_set_value(line.params + 0, value);
+				}
 				line.directive = DIRECTIVE_DATA;
-				param_set_value(line.params + 0, value);
+				
 				lc++;
 			}
 		}
 		//INSTRUCTION
 		else {
-			next_word = buf;
+			next_word = remove_trailing_space(buf);
 			for (int i = 0; i < 3; i++) {
 				word = strtok_s(next_word, " ,\t", &next_word);
 

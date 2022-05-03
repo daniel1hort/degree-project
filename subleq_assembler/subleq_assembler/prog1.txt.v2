@@ -1,6 +1,8 @@
-.ORG 50
+.ORG 10
 b a ? 
 a a ? 
-.END
+ZERO ZERO END
 .DATA 4
 .DATA 2
+.DATA b
+.DATA 0

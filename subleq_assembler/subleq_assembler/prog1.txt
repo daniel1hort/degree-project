@@ -1,7 +1,8 @@
-.ORG 50			; set location counter to 50
+.ORG 10			; set location counter to 50
 b a				; a = a - b
 a				; a = a - a or a = 0
 .END			; end of program
 				; empty line
 a: .DATA 4		; a points to memory location with value 4
 b: .DATA 2		; b points to memory location with value 2
+.DATA b			; can aslo store a label's value

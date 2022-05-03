@@ -16,7 +16,7 @@ typedef int16_t static_ptr;
 typedef enum {FALSE, TRUE} BOOL;
 
 typedef enum error_type {
-	ERROR_NAN,
+	ERROR_INVALID_DATA_PARAM,
 	ERROR_INVALID_LABEL_NAME,
 	ERROR_UNKNOWN_DIRECTIVE,
 	ERROR_MULTIPLY_DEFINED_LABEL,
@@ -43,6 +43,12 @@ typedef enum label_status {
 	LABEL_STATUS_UNDEFINED
 } LABEL_STATUS;
 
+typedef enum param_status{
+	PARAM_STATUS_EMPTY = 0,
+	PARAM_STATUS_VALUE = 1,
+	PARAM_STATUS_NAME  = 2
+} PARAM_STATUS;
+
 typedef struct label_def {
 	char name[MAX_LABEL_LENGTH + 1];
 	uint64_t value;
@@ -54,7 +60,7 @@ typedef struct label_def {
 typedef struct param_def {
 	char name[MAX_LABEL_LENGTH + 1];
 	uint64_t value;
-	BOOL empty;
+	PARAM_STATUS status;
 } PARAM_DEF;
 
 typedef struct line_def {
