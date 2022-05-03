@@ -21,6 +21,7 @@ int label_add(LABEL_DEF label) {
 			}
 			else if (labels[i].status == LABEL_STATUS_UNDEFINED && label.status == LABEL_STATUS_VALID) {
 				labels[i].status = LABEL_STATUS_VALID;
+				labels[i].value = label.value;
 			}
 			return i;
 		}
