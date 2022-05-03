@@ -340,7 +340,7 @@ void step1(FILE* stream1, FILE* stream2) {
 		exit(EXIT_FAILURE);
 }
 
-void step2(FILE* stream1, FILE* stream2) {
+void step2(FILE* stream1, FILE* stream2, int size) {
 	char buf[SMALL_SIZE + 1];
 	char* word, * next_word = NULL;
 	int line_count = 0;
@@ -406,4 +406,10 @@ void step2(FILE* stream1, FILE* stream2) {
 
 		line_parse(line, stream2);
 	}
+
+	//Fill the file with 0 until size
+	line_init(&line);
+	line.directive = DIRECTIVE_ORG;
+	param_set_value(line.params + 0, size - 1);
+	line_parse(line, stream2);
 }
