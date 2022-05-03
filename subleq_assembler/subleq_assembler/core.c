@@ -194,7 +194,7 @@ BOOL symbol_enforce_END(LINE_DEF line) {
 
 //-------------------------------------------------------------------------------------------------------------------
 
-void step1(FILE * stream1, FILE* stream2) {
+void step1(FILE* stream1, FILE* stream2) {
 	char buf[SMALL_SIZE + 1], discard[SMALL_SIZE + 1];
 	char* word, * next_word = NULL;
 	int line_count = 0;
