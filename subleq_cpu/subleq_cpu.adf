@@ -18,11 +18,13 @@ FLOWTOOLS=NONE
 FAMILY=
 [Files]
 /SUBLEQ_CPU.vhd=-1
+/RAM.vhd=-1
 [Files.Data]
 .\src\SUBLEQ_CPU.vhd=VHDL Source Code
+.\src\RAM.vhd=VHDL Source Code
 [SpecTracer]
 WindowVisible=0
 [HierarchyViewer]
-HierarchyInformation=cpu_tb|CPU_TB|0        
+HierarchyInformation=ram|RAM|0 ram1df|RAM1DF|0
 ShowHide=ShowTopLevel
 Selected=
