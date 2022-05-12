@@ -27,16 +27,18 @@ use ieee.std_logic_textio.all;
 
 entity RAM1DF is
 	generic(
-		g_ADR_LINES  : natural := 64;
-		g_DATA_LINES : natural := 64;
-		g_MEM_SIZE   : natural := 20
+		g_ADR_LINES  : integer := 64;
+		g_DATA_LINES : integer := 64;
+		g_MEM_SIZE   : integer := 256
 	);
 	port(
 		i_DATA: in  std_logic_vector(g_DATA_LINES-1 downto 0);
 		i_ADR:  in  std_logic_vector(g_ADR_LINES-1  downto 0);
 		i_WE:   in  std_logic;
 		i_WCLK: in  std_logic;
-		o_DATA: out std_logic_vector(g_DATA_LINES-1 downto 0)
+		i_REQ:  in  std_logic;
+		o_DATA: out std_logic_vector(g_DATA_LINES-1 downto 0);
+		o_ACK:  out std_logic
 	);
 end entity;
 
@@ -67,6 +69,124 @@ end function;
 signal s_MEM: t_MEM := f_INIT_MEM("mem.bin");
 
 begin
+	
+	o_DATA <= s_MEM(to_integer(unsigned(i_ADR)));
+	
+	process(i_WCLK)
+	begin
+		if i_WCLK = '1' then 
+			if i_WE = '1' and i_REQ = '1' then
+				s_MEM(to_integer(unsigned(i_ADR))) <= i_DATA;
+				o_ACK <= '1';
+			else
+				o_ACK <= '0';
+			end if;
+		end if;
+	end process;
+	
+end architecture;
+
+
+
+
+
+library ieee;
+use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+
+
+entity TB_RAM is
+end entity;
+
+
+architecture TB_RAM of TB_RAM is
+
+component D_FF is
+	port(
+		i_D:   in  std_logic;
+		i_CLK: in  std_logic;
+		o_Q:   out std_logic
+	);
+end component;
+
+component SYNC2H is
+	port(
+		i_D1: in std_logic;
+		i_D2: in std_logic;
+		i_CLK1: in std_logic;
+		i_CLK2: in std_logic;
+		o_Q1: out std_logic;
+		o_Q2: out std_logic
+	);
+end component;
+
+component RAM1DF is
+	generic(
+		g_ADR_LINES  : integer := 64;
+		g_DATA_LINES : integer := 64;
+		g_MEM_SIZE   : integer := 256
+	);
+	port(
+		i_DATA: in  std_logic_vector(g_DATA_LINES-1 downto 0);
+		i_ADR:  in  std_logic_vector(g_ADR_LINES-1  downto 0);
+		i_WE:   in  std_logic;
+		i_WCLK: in  std_logic;
+		i_REQ:  in  std_logic;
+		o_DATA: out std_logic_vector(g_DATA_LINES-1 downto 0);
+		o_ACK:  out std_logic
+	);
+end component;
+
+constant CLK_INTERVAL : time := 10ns; --100MHz
+signal s_CLK : std_logic := '0';
+
+constant ADR_LINES  : integer := 64;
+constant DATA_LINES : integer := 64;
+signal s_DATA_IN : std_logic_vector(DATA_LINES-1 downto 0) := (others => '0'); 
+signal s_DATA_OUT : std_logic_vector(DATA_LINES-1 downto 0);
+signal s_WE: std_logic;
+signal s_REQ, s_REQ1: std_logic;
+signal s_ACK, s_ACK1: std_logic;
+signal s_ADR : std_logic_vector(ADR_LINES-1 downto 0) := (others => '0');
+
+begin
+	
+	p_CLK : process
+	begin
+		s_CLK <= not s_CLK;
+		wait for CLK_INTERVAL/2;
+	end process;
+	
+	p_INC : process(s_CLK)
+	begin
+		if s_CLK = '1' then
+			--s_ADR <= std_logic_vector(unsigned(s_ADR)+1);
+		end if;
+	end process;
+	
+	p_ACK : process(s_ACK)
+	begin
+		if s_ACK = '1' then
+			--s_WE <= '0';
+		end if;
+	end process;
+	
+	s_WE      <= '0', '1' after 10ns, '0' after 50ns;
+	s_REQ     <= '0', '1' after 10ns, '0' after 50ns;
+	s_DATA_IN <= (others => '1');
+	
+	sync: SYNC2H port map (s_REQ, s_ACK, s_CLK, s_CLK, s_REQ1, s_ACK1);
+	
+	ram: RAM1DF port map(
+		i_DATA => s_DATA_IN,
+		i_ADR  => s_ADR,
+		i_WE   => s_WE,
+		i_WCLK => s_CLK,
+		i_REQ  => s_REQ1,
+		o_DATA => s_DATA_OUT,
+		o_ACK  => s_ACK
+	);
+	
 end architecture;
 
 
