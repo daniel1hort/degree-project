@@ -27,7 +27,7 @@ entity D_FF is
 	port(
 		i_D:   in  std_logic;
 		i_CLK: in  std_logic;
-		o_Q:   out std_logic
+		o_Q:   out std_logic := '0'
 	);
 end entity;
 
@@ -70,7 +70,7 @@ component D_FF is
 	port(
 		i_D:   in  std_logic;
 		i_CLK: in  std_logic;
-		o_Q:   out std_logic
+		o_Q:   out std_logic := '0'
 	);
 end component;
 

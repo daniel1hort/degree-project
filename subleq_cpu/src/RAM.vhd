@@ -38,7 +38,7 @@ entity RAM1DF is
 		i_WCLK: in  std_logic;
 		i_REQ:  in  std_logic;
 		o_DATA: out std_logic_vector(g_DATA_LINES-1 downto 0);
-		o_ACK:  out std_logic
+		o_ACK:  out std_logic := '0'
 	);
 end entity;
 
