@@ -74,7 +74,7 @@ begin
 	
 	process(i_WCLK)
 	begin
-		if i_WCLK = '1' then 
+		if rising_edge(i_WCLK) then 
 			if i_WE = '1' and i_REQ = '1' then
 				s_MEM(to_integer(unsigned(i_ADR))) <= i_DATA;
 				o_ACK <= '1';
@@ -137,24 +137,24 @@ component RAM1DF is
 	);
 end component;
 
-constant CLK_INTERVAL : time := 10ns; --100MHz
+constant c_CLK_INTERVAL : time := 10ns; --100MHz
 signal s_CLK : std_logic := '0';
 
-constant ADR_LINES  : integer := 64;
-constant DATA_LINES : integer := 64;
-signal s_DATA_IN : std_logic_vector(DATA_LINES-1 downto 0) := (others => '0'); 
-signal s_DATA_OUT : std_logic_vector(DATA_LINES-1 downto 0);
-signal s_WE: std_logic;
-signal s_REQ, s_REQ1: std_logic;
-signal s_ACK, s_ACK1: std_logic;
-signal s_ADR : std_logic_vector(ADR_LINES-1 downto 0) := (others => '0');
+constant c_ADR_LINES   : integer := 64;
+constant c_DATA_LINES  : integer := 64;
+signal   s_DATA_IN     : std_logic_vector(c_DATA_LINES-1 downto 0) := (others => '0'); 
+signal   s_DATA_OUT    : std_logic_vector(c_DATA_LINES-1 downto 0);
+signal   s_WE          : std_logic;
+signal   s_REQ, s_REQ1 : std_logic;
+signal   s_ACK, s_ACK1 : std_logic;
+signal   s_ADR         : std_logic_vector(c_ADR_LINES-1 downto 0) := (others => '0');
 
 begin
 	
 	p_CLK : process
 	begin
 		s_CLK <= not s_CLK;
-		wait for CLK_INTERVAL/2;
+		wait for c_CLK_INTERVAL/2;
 	end process;
 	
 	p_INC : process(s_CLK)

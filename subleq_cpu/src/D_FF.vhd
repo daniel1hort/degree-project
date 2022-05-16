@@ -37,7 +37,7 @@ begin
 	
 	p_CLK : process(i_CLK)
 	begin
-		if i_CLK = '1' then
+		if rising_edge(i_CLK) then
 			o_Q <= i_D;
 		end if;
 	end process;
