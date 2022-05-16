@@ -1,7 +1,6 @@
-.ORG 10
-b a ? 
+a b ? 
 a a ? 
-ZERO ZERO END
+ZERO ZERO *
 .DATA 4
 .DATA 2
 .DATA b

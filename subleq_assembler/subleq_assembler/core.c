@@ -76,7 +76,7 @@ void line_write(LINE_DEF line, FILE* stream) {
 		fprintf_s(stream, ".ORG %lld", line.params[0].value);
 		break;
 	case DIRECTIVE_END:
-		fprintf_s(stream, "ZERO ZERO END");
+		fprintf_s(stream, "ZERO ZERO *");
 		break;
 	case DIRECTIVE_DATA:
 		if ((line.params[0].status & PARAM_STATUS_VALUE) != 0)
@@ -89,8 +89,6 @@ void line_write(LINE_DEF line, FILE* stream) {
 }
 
 void line_parse(LINE_DEF line, FILE* stream) {
-	int zero = label_get("ZERO");
-	int end = label_get("END");
 	int64_t zero_value = 0;
 
 	switch (line.directive)
@@ -106,9 +104,6 @@ void line_parse(LINE_DEF line, FILE* stream) {
 		}
 		break;
 	case DIRECTIVE_END:
-		fwrite(&(labels[zero].value), sizeof(int64_t), 1, stream);
-		fwrite(&(labels[zero].value), sizeof(int64_t), 1, stream);
-		fwrite(&(labels[end].value), sizeof(int64_t), 1, stream);
 		break;
 	case DIRECTIVE_DATA:
 		fwrite(&(line.params[0].value), sizeof(int64_t), 1, stream);
@@ -168,9 +163,6 @@ void raise_error(int line, int column, ERROR_TYPE error, const char* info) {
 	case ERROR_SYMBOL_ZERO_READONLY:
 		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol 'ZERO' is read-only.\n", __TIME__, line, column);
 		break;
-	case ERROR_SYMBOL_END_READONLY:
-		fprintf_s(stderr, "[%s] [error] at line %d, column %d: symbol 'END' is read-only.\n", __TIME__, line, column);
-		break;
 	}
 }
 
@@ -188,11 +180,6 @@ void symbol_add_ZERO(FILE* stream, int64_t value) {
 
 BOOL symbol_enforce_ZERO(LINE_DEF line) {
 	return _stricmp(line.params[0].name, "ZERO") == 0 || _stricmp(line.params[1].name, "ZERO") != 0;
-}
-
-BOOL symbol_enforce_END(LINE_DEF line) {
-	return _stricmp(line.params[1].name, "END") != 0 &&
-		(_stricmp(line.params[0].name, "END") != 0 || line.params[1].status != PARAM_STATUS_EMPTY);
 }
 #pragma endregion
 
@@ -233,7 +220,7 @@ void step1(FILE* stream1, FILE* stream2) {
 			word = remove_trailing_space(buf);
 			BOOL valid = label_valid_name(word);
 
-			if (_stricmp(word, "ZERO") == 0 || _stricmp(word, "END") == 0)
+			if (_stricmp(word, "ZERO") == 0)
 				raise_error(line_count, word - buf, ERROR_INTERNAL_SYMBOL_REDEFINED, word);
 
 			label_set(&label, line_count, word - buf, word, (valid ? LABEL_STATUS_VALID : LABEL_STATUS_INVALID), lc);
@@ -259,8 +246,6 @@ void step1(FILE* stream1, FILE* stream2) {
 			}
 			else if (_stricmp(word + 1, "END") == 0) {
 				line.directive = DIRECTIVE_END;
-				label_set(&label, 0, 0, "END", LABEL_STATUS_VALID, lc);
-				label_add(label);
 				lc += 3;
 			}
 			else if (_stricmp(word + 1, "DATA") == 0) {
@@ -310,8 +295,6 @@ void step1(FILE* stream1, FILE* stream2) {
 
 			if (!symbol_enforce_ZERO(line))
 				raise_error(line_count, 0, ERROR_SYMBOL_ZERO_READONLY, NULL);
-			if (!symbol_enforce_END(line))
-				raise_error(line_count, 0, ERROR_SYMBOL_END_READONLY, NULL);
 
 			lc += 3;
 		}

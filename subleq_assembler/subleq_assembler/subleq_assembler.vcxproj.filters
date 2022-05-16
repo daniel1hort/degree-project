@@ -33,10 +33,10 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="prog1.txt.v2">
+    <None Include="prog1.bin">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="prog1.bin">
+    <None Include="prog1.txt.out">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

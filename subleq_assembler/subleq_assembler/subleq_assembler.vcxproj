@@ -150,7 +150,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="prog1.bin" />
-    <None Include="prog1.txt.v2" />
+    <None Include="prog1.txt.out" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
