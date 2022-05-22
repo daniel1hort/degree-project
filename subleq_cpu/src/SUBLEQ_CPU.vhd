@@ -116,7 +116,7 @@ begin
 				end if;
 			elsif s_STATE = WRITE_B and i_MISS = '0' then
 				s_STATE   <= JUMP_TO_C;
-			elsif s_STATE = JUMP_TO_C then
+			elsif s_STATE = JUMP_TO_C and i_MISS = '0' then
 				if signed(v_DATA_B) <= 0 then 
 					s_ADR     <= s_ADR_C;
 					s_REL_ADR <= s_ADR_C;
@@ -273,7 +273,13 @@ begin
 		);
 	
 	cache1: CACHE
-	port map(
+		generic map(
+			--g_ADR_LINES  : integer := 64;
+			--g_DATA_LINES : integer := 64;
+			g_LINE_SIZE => 8,
+			g_MEM_LINES => 32
+		)
+		port map(
 			i_CLK       => s_CLK,
 			i_ADR       => s_ADR_CPU,
 			i_DATA_MEM  => s_DATA_IN,

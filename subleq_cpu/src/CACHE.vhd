@@ -105,6 +105,7 @@ begin
 		
 		variable v_BLOCK_NUMBER: integer;
 		variable v_ADR:          std_logic_vector(g_ADR_LINES-1 downto 0);
+		variable v_REQ:          std_logic;
 	begin
 		if rising_edge(i_RST) or s_STATE = INITIATE then
 			o_ADR      <= (others => '0');
@@ -112,6 +113,7 @@ begin
 			o_WE       <= '0';
 			o_MISS     <= '1';
 			o_REQ      <= '0';
+			v_REQ      := '0';
 			s_STATE    <= AVAILABLE;
 			s_TAGS     <= (others => c_TAG_DEFAULT);
 		end if;
@@ -141,31 +143,39 @@ begin
 					elsif v_TAG.VALID = '1' and v_TAG.VALUE /= v_TAG_VALUE and v_TAG.DIRTY = '1' then
 						o_MISS         <= '1';
 						s_STATE        <= WRITE_LINE;
+						o_WE           <= '1';
 					end if;
 				when READ_LINE  =>
 					if v_BLOCK_NUMBER < g_LINE_SIZE then
 						s_MEM(v_LINE_DECODED)(v_BLOCK_NUMBER) <= i_DATA_MEM;
-						v_BLOCK_NUMBER                := v_BLOCK_NUMBER+1;
+						v_BLOCK_NUMBER                  := v_BLOCK_NUMBER+1;
 						v_ADR(c_OFFSET_SIZE-1 downto 0) := std_logic_vector(to_unsigned(v_BLOCK_NUMBER, c_OFFSET_SIZE));
-						o_ADR                         <= v_ADR;
+						o_ADR                           <= v_ADR;
 					else
-						s_TAGS(v_LINE_DECODED).VALID <= '1';
+						s_TAGS(v_LINE_DECODED) <= ('0', '1', v_TAG_VALUE);
 						s_STATE <= AVAILABLE;
 						o_MISS  <= '0';
 					end if;
 				when WRITE_LINE =>
-					if v_BLOCK_NUMBER < g_LINE_SIZE then
+					if v_BLOCK_NUMBER < g_LINE_SIZE and v_REQ = '0' and i_ACK = '0' then
 						v_ADR          := f_ENCODE_ADR(std_logic_vector(to_unsigned(v_BLOCK_NUMBER, c_OFFSET_SIZE)),
 						                               std_logic_vector(to_unsigned(v_LINE_DECODED, c_INDEX_SIZE)), 
 						                               v_TAG.VALUE);
+						o_ADR          <= v_ADR;
+						o_DATA_MEM     <= s_MEM(v_LINE_DECODED)(v_BLOCK_NUMBER);
+						v_REQ          := '1';
+					elsif v_BLOCK_NUMBER < g_LINE_SIZE and i_ACK = '1' and v_REQ = '1' then
 						v_BLOCK_NUMBER := v_BLOCK_NUMBER+1;
-						-- write logic
-					else
-						s_STATE <= READ_LINE;
+						v_REQ          := '0';
+					elsif v_BLOCK_NUMBER >= g_LINE_SIZE then
+						o_WE           <= '0';
+						s_STATE        <= AVAILABLE;
+						s_TAGS(v_LINE_DECODED).DIRTY <= '0';
 					end if;
 				when others =>
 			end case;
 			
+			o_REQ          <= v_REQ;
 			s_DATA_OUT_CPU <= s_MEM(v_LINE_DECODED)(v_BLOCK_DECODED);
 		end if;
 	end process;
