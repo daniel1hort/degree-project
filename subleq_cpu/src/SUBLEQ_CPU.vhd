@@ -31,14 +31,12 @@ entity SUBLEQ_CPU is
 		g_DATA_LINES : integer := 64 
 	);
 	port(
-		i_CLK   : in  std_logic;
-		i_RST   : in  std_logic;
-		i_ACK   : in  std_logic; --	ACKNOWLEDGE REQUEST TERMINATION
-		i_DATA  : in  std_logic_vector(g_DATA_LINES-1 downto 0);
-		o_WE    : out std_logic; -- WRITE ENABLE
-		o_REQ   : out std_logic; -- SEND REQUEST
-		o_ADR   : out std_logic_vector(g_ADR_LINES-1  downto 0);
-		o_DATA  : out std_logic_vector(g_DATA_LINES-1 downto 0) 
+		i_CLK   : in    std_logic;
+		i_RST   : in    std_logic;
+		i_MISS  : in    std_logic;
+		o_WE    : out   std_logic; -- WRITE ENABLE
+		o_ADR   : out   std_logic_vector(g_ADR_LINES-1  downto 0);
+		io_DATA : inout std_logic_vector(g_DATA_LINES-1 downto 0) 
 	);
 end entity;
 
@@ -57,8 +55,10 @@ type PIPELINE_STATE is (
 	JUMP_TO_C);
 signal s_ADR, s_REL_ADR                 : std_logic_vector(g_ADR_LINES-1 downto 0);
 signal s_STATE                          : PIPELINE_STATE := INITIATE;
+signal s_DATA                           : std_logic_vector(g_DATA_LINES-1 downto 0);
 signal s_DATA_A, s_DATA_B, s_DATA_NEW_B : std_logic_vector(g_DATA_LINES-1 downto 0);
 signal s_ADR_A, s_ADR_B, s_ADR_C        : std_logic_vector(g_ADR_LINES-1  downto 0);
+signal s_WE: std_logic;
 
 procedure p_INC_SLV(signal s_VALUE : inout std_logic_vector) is
 begin
@@ -75,51 +75,48 @@ begin
 
 	p_PIPELINE : process(i_CLK, i_RST)
 		variable v_DATA_B : std_logic_vector(g_DATA_LINES-1 downto 0);
-		variable v_REQ    : std_logic;
 	begin
 		
 		if rising_edge(i_RST) or s_STATE = INITIATE then
 			s_ADR     <= (others => '0');
 			s_REL_ADR <= (others => '0');
 			s_STATE   <= FETCH_ADR_A;
-			o_WE      <= '0';
-			v_REQ     := '0';
-			o_DATA    <= (others => '0');
+			s_WE      <= '0'; 
+			s_DATA    <= (others => '0');
 		end if;
 		
 		if rising_edge(i_CLK) and i_RST = '0' then
-			if s_STATE = FETCH_ADR_A then
-				s_ADR_A   <= i_DATA(g_ADR_LINES-1 downto 0);
+			if s_STATE = FETCH_ADR_A and i_MISS = '0' then
+				s_ADR_A   <= io_DATA(g_ADR_LINES-1 downto 0);
 				p_INC_SLV(s_REL_ADR);
 				s_STATE   <= FETCH_ADR_B;
-			elsif s_STATE = FETCH_ADR_B then
-				s_ADR_B   <= i_DATA(g_ADR_LINES-1 downto 0);
+			elsif s_STATE = FETCH_ADR_B and i_MISS = '0' then
+				s_ADR_B   <= io_DATA(g_ADR_LINES-1 downto 0);
 				p_INC_SLV(s_REL_ADR);
 				s_STATE   <= FETCH_ADR_C;
-			elsif s_STATE = FETCH_ADR_C then
-				s_ADR_C   <= i_DATA(g_ADR_LINES-1 downto 0);
+			elsif s_STATE = FETCH_ADR_C and i_MISS = '0' then
+				s_ADR_C   <= io_DATA(g_ADR_LINES-1 downto 0);
 				s_REL_ADR <= s_ADR_A;
 				s_STATE   <= FETCH_DATA_A;
-			elsif s_STATE = FETCH_DATA_A then
-				s_DATA_A  <= i_DATA;
+			elsif s_STATE = FETCH_DATA_A and i_MISS = '0' then
+				s_DATA_A  <= io_DATA;
 				s_REL_ADR <= s_ADR_B;
 				s_STATE   <= FETCH_DATA_B;
-			elsif s_STATE = FETCH_DATA_B then
-				s_DATA_B  <= i_DATA;
+			elsif s_STATE = FETCH_DATA_B and i_MISS = '0' then
+				s_DATA_B  <= io_DATA;
 				s_STATE   <= SUBSTRACT;
 			elsif s_STATE = SUBSTRACT then
 				v_DATA_B  := f_SUBSTRACT(s_DATA_B, s_DATA_A);
 				if s_DATA_B = v_DATA_B then
 					s_STATE   <= JUMP_TO_C;
 				else
+					s_DATA    <= v_DATA_B;
+					s_WE      <= '1';
 					s_STATE   <= WRITE_B;
 				end if;
-			elsif s_STATE = WRITE_B and i_ACK = '0' then
-				o_DATA    <= v_DATA_B;
-				o_WE      <= '1';
-				v_REQ     := '1';
+			elsif s_STATE = WRITE_B and i_MISS = '0' then
 				s_STATE   <= JUMP_TO_C;
-			elsif s_STATE = JUMP_TO_C and i_ACK = v_REQ then
+			elsif s_STATE = JUMP_TO_C then
 				if signed(v_DATA_B) <= 0 then 
 					s_ADR     <= s_ADR_C;
 					s_REL_ADR <= s_ADR_C;
@@ -127,18 +124,17 @@ begin
 					s_ADR     <= std_logic_vector(unsigned(s_ADR)+3);
 					s_REL_ADR <= std_logic_vector(unsigned(s_ADR)+3);
 				end if;
-				v_REQ     := '0';
-				o_WE      <= '0';
+				s_WE      <= '0';
 				s_STATE   <= FETCH_ADR_A;
 			else
 				-- we just wait
 			end if;
 		end if;
-		
-		o_REQ <= v_REQ;
 	end process;
 	
-	o_ADR <= s_REL_ADR;
+	o_WE    <= s_WE;
+	o_ADR   <= s_REL_ADR;
+	io_DATA <= s_DATA when s_WE = '1' else (others => 'Z');
 	
 end architecture;
 
@@ -163,14 +159,12 @@ component SUBLEQ_CPU is
 		g_DATA_LINES : integer := 64 
 	);
 	port(
-		i_CLK   : in  std_logic;
-		i_RST   : in  std_logic;
-		i_ACK   : in  std_logic;
-		i_DATA  : in  std_logic_vector(g_DATA_LINES-1 downto 0);
-		o_WE    : out std_logic;
-		o_REQ   : out std_logic;
-		o_ADR   : out std_logic_vector(g_ADR_LINES-1  downto 0);
-		o_DATA  : out std_logic_vector(g_DATA_LINES-1 downto 0) 
+		i_CLK    : in    std_logic;
+		i_RST    : in    std_logic;
+		i_MISS   : in    std_logic;
+		o_WE     : out   std_logic;
+		o_ADR    : out   std_logic_vector(g_ADR_LINES-1  downto 0);
+		io_DATA  : inout std_logic_vector(g_DATA_LINES-1 downto 0) 
 	);
 end component;
 
@@ -202,15 +196,40 @@ component SYNC2H is
 	);
 end component;
 
+component CACHE is
+	generic(
+		g_ADR_LINES  : integer := 64;
+		g_DATA_LINES : integer := 64;
+		g_LINE_SIZE  : integer := 8;
+		g_MEM_LINES  : integer := 32
+	);
+	port(
+		i_CLK:      in    std_logic;
+		i_ADR:      in    std_logic_vector(g_ADR_LINES-1  downto 0);
+		i_DATA_MEM: in    std_logic_vector(g_DATA_LINES-1	downto 0);
+		i_WE:       in    std_logic;
+		i_ACK:      in    std_logic;
+		i_RST:      in    std_logic;
+		o_ADR:      out   std_logic_vector(g_ADR_LINES-1  downto 0); 
+		o_DATA_MEM: out   std_logic_vector(g_DATA_LINES-1 downto 0);
+		o_WE:       out   std_logic;
+		o_MISS:     out   std_logic;
+		o_REQ:		out	  std_logic;
+		io_DATA:    inout std_logic_vector(g_DATA_LINES-1 downto 0)
+	);
+end component;
+
 constant c_CLK_INTERVAL : time := 10ns; --100MHz
-signal s_CLK : std_logic := '0';
+signal s_CLK:  std_logic := '0'; 
 
 constant c_ADR_LINES  : integer := 64;
 constant c_DATA_LINES : integer := 64;
-signal   s_ADR        : std_logic_vector(c_ADR_LINES-1  downto 0);
+signal   s_ADR_CPU    : std_logic_vector(c_ADR_LINES-1  downto 0);
+signal   s_ADR_RAM    : std_logic_vector(c_ADR_LINES-1  downto 0);
 signal   s_DATA_IN    : std_logic_vector(c_DATA_LINES-1 downto 0);
 signal   s_DATA_OUT   : std_logic_vector(c_DATA_LINES-1 downto 0);
-signal   s_WE         : std_logic;
+signal   s_DATA       : std_logic_vector(c_DATA_LINES-1 downto 0);
+signal   s_WE_CPU, s_WE_RAM, s_MISS         : std_logic;
 signal   s_REQ, s_REQ_OUT, s_ACK, s_ACK_OUT : std_logic;
 
 
@@ -219,33 +238,31 @@ begin
 	p_CLK : process
 	begin
 		wait for c_CLK_INTERVAL/2;
-		s_CLK <= not s_CLK;
+		s_CLK  <= not s_CLK;
 	end process;
 	
-	cpu: SUBLEQ_CPU
+	cpu:   SUBLEQ_CPU
 		port map(
-			i_CLK  => s_CLK,
-			i_RST  => '0',
-			i_ACK  => s_ACK_OUT,
-			i_DATA => s_DATA_IN,
-			o_WE   => s_WE,
-			o_REQ  => s_REQ,
-			o_ADR  => s_ADR,
-			o_DATA => s_DATA_OUT
+			i_CLK   => s_CLK,
+			i_RST   => '0',
+			i_MISS  => s_MISS,
+			o_WE    => s_WE_CPU,
+			o_ADR   => s_ADR_CPU,
+			io_DATA => s_DATA
 		);
 		
-	ram: RAM1DF
+	ram:   RAM1DF
 		port map(
 			i_DATA => s_DATA_OUT, 
-			i_ADR  => s_ADR,
-			i_WE   => s_WE,
+			i_ADR  => s_ADR_RAM,
+			i_WE   => s_WE_RAM,
 			i_WCLK => s_CLK,
 			i_REQ  => s_REQ_OUT,
 			o_DATA => s_DATA_IN,
 			o_ACK  => s_ACK
 		);
 		
-	sync: SYNC2H
+	sync:  SYNC2H
 		port map(
 			i_D1   => s_REQ,
 			i_D2   => s_ACK,
@@ -253,6 +270,22 @@ begin
 			i_CLK2 => s_CLK,
 			o_Q1   => s_REQ_OUT,
 			o_Q2   => s_ACK_OUT
+		);
+	
+	cache1: CACHE
+	port map(
+			i_CLK       => s_CLK,
+			i_ADR       => s_ADR_CPU,
+			i_DATA_MEM  => s_DATA_IN,
+			i_WE        => s_WE_CPU,
+			i_ACK       => s_ACK_OUT,
+			i_RST       => '0',
+			o_ADR       => s_ADR_RAM,
+			o_DATA_MEM  => s_DATA_OUT,
+			o_WE        => s_WE_RAM,
+			o_MISS      => s_MISS,
+			o_REQ       => s_REQ,
+			io_DATA     => s_DATA
 		);
 	
 end architecture;
