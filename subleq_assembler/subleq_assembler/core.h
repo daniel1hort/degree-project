@@ -72,6 +72,6 @@ extern LABEL_DEF labels[INT16_MAX];
 extern int labels_count;
 
 void step1(FILE* stream1, FILE* stream2);
-void step2(FILE* stream1, FILE* stream2, int size);
+void step2(FILE* stream1, FILE* stream2, int file_size, int word_size);
 
 #endif

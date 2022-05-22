@@ -1,4 +1,4 @@
-;.ORG 10			; set location counter to 50
+;.ORG 10		; set location counter to 10
 a b				; b = b - a
 a				; a = a - a or a = 0
 .END			; end of program

@@ -143,6 +143,7 @@
     <ClCompile Include="source.c" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="brainstormingtxt.txt" />
     <Text Include="prog1.txt" />
   </ItemGroup>
   <ItemGroup>

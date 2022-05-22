@@ -88,25 +88,25 @@ void line_write(LINE_DEF line, FILE* stream) {
 	fprintf_s(stream, "\n");
 }
 
-void line_parse(LINE_DEF line, FILE* stream) {
+void line_parse(LINE_DEF line, int word_size, FILE* stream) {
 	int64_t zero_value = 0;
 
 	switch (line.directive)
 	{
 	case DIRECTIVE_NONE:
 		for (int i = 0; i < 3; i++) {
-			fwrite(&(line.params[i].value), sizeof(int64_t), 1, stream);
+			fwrite(&(line.params[i].value), word_size , 1, stream);
 		}
 		break;
 	case DIRECTIVE_ORG:
 		for (int i = line.params[1].value; i < line.params[0].value; i++) {
-			fwrite(&zero_value, sizeof(int64_t), 1, stream);
+			fwrite(&zero_value, word_size, 1, stream);
 		}
 		break;
 	case DIRECTIVE_END:
 		break;
 	case DIRECTIVE_DATA:
-		fwrite(&(line.params[0].value), sizeof(int64_t), 1, stream);
+		fwrite(&(line.params[0].value), word_size, 1, stream);
 		break;
 	}
 }
@@ -323,7 +323,7 @@ void step1(FILE* stream1, FILE* stream2) {
 		exit(EXIT_FAILURE);
 }
 
-void step2(FILE* stream1, FILE* stream2, int size) {
+void step2(FILE* stream1, FILE* stream2, int file_size, int word_size) {
 	char buf[SMALL_SIZE + 1];
 	char* word, * next_word = NULL;
 	int line_count = 0;
@@ -387,12 +387,12 @@ void step2(FILE* stream1, FILE* stream2, int size) {
 			lc += 3;
 		}
 
-		line_parse(line, stream2);
+		line_parse(line, word_size, stream2);
 	}
 
 	//Fill the file with 0 until size
 	line_init(&line);
 	line.directive = DIRECTIVE_ORG;
-	param_set_value(line.params + 0, size - 1);
-	line_parse(line, stream2);
+	param_set_value(line.params + 0, file_size - 1);
+	line_parse(line, word_size, stream2);
 }

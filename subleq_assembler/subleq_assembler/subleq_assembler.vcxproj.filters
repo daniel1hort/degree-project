@@ -26,6 +26,9 @@
     <Text Include="prog1.txt">
       <Filter>Resource Files</Filter>
     </Text>
+    <Text Include="brainstormingtxt.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="core.h">

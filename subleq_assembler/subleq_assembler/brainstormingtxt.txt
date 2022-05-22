@@ -1,0 +1,30 @@
+.MACRO add a b
+r1        ; r1 = r1-r1  <=> r1 = 0
+b r1      ; r1 = r1 - b <=> r1 = -b
+r1 a      ; a = a - r1  <=> a = a - (-b) <=> a = a+b
+.ENDM
+
+.MACRO NOP
+ZERO
+.ENDM
+
+r1 r1 ?
+
+;.ORG 10			; set location counter to 10
+a b				; b = b - a
+a				; a = a - a or a = 0
+.END            ; end of program
+
+@NOP
+
+.ORG 128
+@add x y
+
+x: .DATA 10
+y: .DATA 5
+
+
+.ORG 256				; empty line
+a: .DATA 4		; a points to memory location with value 4
+b: .DATA 2		; b points to memory location with value 2
+.DATA b			; can aslo store a label's value
