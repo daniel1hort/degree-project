@@ -32,15 +32,17 @@ CDebugASDBName=$dsn/src/subleq_cpu.asdb
 /RAM.vhd=-1
 /D_FF.vhd=-1
 /CACHE.vhd=-1
+/ARBITER.vhd=-1
 [Files.Data]
 .\src\SUBLEQ_CPU.vhd=VHDL Source Code
 .\src\RAM.vhd=VHDL Source Code
 .\src\D_FF.vhd=VHDL Source Code
 .\src\CACHE.vhd=VHDL Source Code
+.\src\ARBITER.vhd=VHDL Source Code
 [SpecTracer]
 WindowVisible=0
 [HierarchyViewer]
-HierarchyInformation=cache|CACHE|0
+HierarchyInformation=cache|CACHE|0 cpu_tb|CPU_TB|0
 ShowHide=ShowTopLevel
 Selected=
 [LocalVhdlSets]

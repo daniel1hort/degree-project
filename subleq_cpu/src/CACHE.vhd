@@ -18,10 +18,6 @@
 --
 -------------------------------------------------------------------------------
 
---{{ Section below this comment is automatically maintained
---   and may be overwritten
---{entity {CACHE} architecture {CACHE}}
-
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -43,11 +39,13 @@ entity CACHE is
 		i_WE:       in    std_logic;
 		i_ACK:      in    std_logic;
 		i_RST:      in    std_logic;
+		i_GRT:      in    std_logic;
 		o_ADR:      out   std_logic_vector(g_ADR_LINES-1  downto 0); 
 		o_DATA_MEM: out   std_logic_vector(g_DATA_LINES-1 downto 0);
 		o_WE:       out   std_logic;
 		o_MISS:     out   std_logic;
 		o_REQ:		out	  std_logic;
+		o_AR_REQ:   out   std_logic;
 		io_DATA:    inout std_logic_vector(g_DATA_LINES-1 downto 0)
 	);
 end entity;
@@ -80,6 +78,10 @@ constant c_TAG_DEFAULT: t_TAG := (
 signal s_MEM:          t_MEM;
 signal s_TAGS:         t_TAGS  := (others => c_TAG_DEFAULT);
 signal s_STATE:        t_STATE := INITIATE;
+signal s_ADR:          std_logic_vector(g_ADR_LINES-1  downto 0); 
+signal s_DATA_MEM:     std_logic_vector(g_DATA_LINES-1 downto 0);
+signal s_WE:           std_logic;
+signal s_REQ:		   std_logic;
 signal s_DATA_OUT_CPU: std_logic_vector(g_DATA_LINES-1 downto 0);
 
 function f_ENCODE_ADR(
@@ -108,11 +110,11 @@ begin
 		variable v_REQ:          std_logic;
 	begin
 		if rising_edge(i_RST) or s_STATE = INITIATE then
-			o_ADR      <= (others => '0');
-			o_DATA_MEM <= (others => '0');
-			o_WE       <= '0';
+			s_ADR      <= (others => '0');
+			s_DATA_MEM <= (others => '0');
+			s_WE       <= '0';
 			o_MISS     <= '1';
-			o_REQ      <= '0';
+			s_REQ      <= '0';
 			v_REQ      := '0';
 			s_STATE    <= AVAILABLE;
 			s_TAGS     <= (others => c_TAG_DEFAULT);
@@ -127,7 +129,8 @@ begin
 			
 			case s_STATE is
 				when AVAILABLE  =>
-					o_we           <= '0';
+					s_WE           <= '0';
+					o_AR_REQ       <= '0';
 					v_BLOCK_NUMBER := 0; -- RESET COUNTER
 					if v_TAG.VALID = '1' and v_TAG.VALUE = v_TAG_VALUE and i_WE = '0' then
 						o_MISS         <= '0';
@@ -139,48 +142,58 @@ begin
 						o_MISS         <= '1';
 						s_STATE        <= READ_LINE;
 						v_ADR(c_OFFSET_SIZE-1 downto 0)        := (others => '0');
-						o_ADR          <= v_ADR;
+						s_ADR          <= v_ADR;
+						o_AR_REQ       <= '1';
 					elsif v_TAG.VALID = '1' and v_TAG.VALUE /= v_TAG_VALUE and v_TAG.DIRTY = '1' then
 						o_MISS         <= '1';
 						s_STATE        <= WRITE_LINE;
-						o_WE           <= '1';
+						s_WE           <= '1';
+						o_AR_REQ       <= '1';
 					end if;
 				when READ_LINE  =>
-					if v_BLOCK_NUMBER < g_LINE_SIZE then
-						s_MEM(v_LINE_DECODED)(v_BLOCK_NUMBER) <= i_DATA_MEM;
-						v_BLOCK_NUMBER                  := v_BLOCK_NUMBER+1;
-						v_ADR(c_OFFSET_SIZE-1 downto 0) := std_logic_vector(to_unsigned(v_BLOCK_NUMBER, c_OFFSET_SIZE));
-						o_ADR                           <= v_ADR;
-					else
-						s_TAGS(v_LINE_DECODED) <= ('0', '1', v_TAG_VALUE);
-						s_STATE <= AVAILABLE;
-						o_MISS  <= '0';
+					if i_GRT = '1' then
+						if v_BLOCK_NUMBER < g_LINE_SIZE then
+							s_MEM(v_LINE_DECODED)(v_BLOCK_NUMBER) <= i_DATA_MEM;
+							v_BLOCK_NUMBER                  := v_BLOCK_NUMBER+1;
+							v_ADR(c_OFFSET_SIZE-1 downto 0) := std_logic_vector(to_unsigned(v_BLOCK_NUMBER, c_OFFSET_SIZE));
+							s_ADR                           <= v_ADR;
+						else
+							s_TAGS(v_LINE_DECODED) <= ('0', '1', v_TAG_VALUE);
+							s_STATE <= AVAILABLE;
+							o_MISS  <= '0';
+						end if;
 					end if;
 				when WRITE_LINE =>
-					if v_BLOCK_NUMBER < g_LINE_SIZE and v_REQ = '0' and i_ACK = '0' then
-						v_ADR          := f_ENCODE_ADR(std_logic_vector(to_unsigned(v_BLOCK_NUMBER, c_OFFSET_SIZE)),
-						                               std_logic_vector(to_unsigned(v_LINE_DECODED, c_INDEX_SIZE)), 
-						                               v_TAG.VALUE);
-						o_ADR          <= v_ADR;
-						o_DATA_MEM     <= s_MEM(v_LINE_DECODED)(v_BLOCK_NUMBER);
-						v_REQ          := '1';
-					elsif v_BLOCK_NUMBER < g_LINE_SIZE and i_ACK = '1' and v_REQ = '1' then
-						v_BLOCK_NUMBER := v_BLOCK_NUMBER+1;
-						v_REQ          := '0';
-					elsif v_BLOCK_NUMBER >= g_LINE_SIZE then
-						o_WE           <= '0';
-						s_STATE        <= AVAILABLE;
-						s_TAGS(v_LINE_DECODED).DIRTY <= '0';
+					if i_GRT = '1' then
+						if v_BLOCK_NUMBER < g_LINE_SIZE and v_REQ = '0' and i_ACK = '0' then
+							v_ADR          := f_ENCODE_ADR(std_logic_vector(to_unsigned(v_BLOCK_NUMBER, c_OFFSET_SIZE)),
+							                               std_logic_vector(to_unsigned(v_LINE_DECODED, c_INDEX_SIZE)), 
+							                               v_TAG.VALUE);
+							s_ADR          <= v_ADR;
+							s_DATA_MEM     <= s_MEM(v_LINE_DECODED)(v_BLOCK_NUMBER);
+							v_REQ          := '1';
+						elsif v_BLOCK_NUMBER < g_LINE_SIZE and i_ACK = '1' and v_REQ = '1' then
+							v_BLOCK_NUMBER := v_BLOCK_NUMBER+1;
+							v_REQ          := '0';
+						elsif v_BLOCK_NUMBER >= g_LINE_SIZE then
+							s_WE           <= '0';
+							s_STATE        <= AVAILABLE;
+							s_TAGS(v_LINE_DECODED).DIRTY <= '0';
+						end if;
 					end if;
 				when others =>
 			end case;
 			
-			o_REQ          <= v_REQ;
+			s_REQ          <= v_REQ;
 			s_DATA_OUT_CPU <= s_MEM(v_LINE_DECODED)(v_BLOCK_DECODED);
 		end if;
 	end process;
 	
-	io_DATA <= s_DATA_OUT_CPU when i_WE = '0' else (others => 'Z');
+	o_WE       <= s_WE			 when i_GRT = '1' else 'Z';
+    o_REQ      <= s_REQ			 when i_GRT = '1' else 'Z';
+	o_ADR      <= s_ADR          when i_GRT = '1' else (others => 'Z');
+	o_DATA_MEM <= s_DATA_MEM     when i_GRT = '1' else (others => 'Z');
+	io_DATA    <= s_DATA_OUT_CPU when i_WE  = '0' else (others => 'Z');
 end architecture;
 
 

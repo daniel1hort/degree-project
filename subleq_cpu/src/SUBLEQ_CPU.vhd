@@ -210,28 +210,56 @@ component CACHE is
 		i_WE:       in    std_logic;
 		i_ACK:      in    std_logic;
 		i_RST:      in    std_logic;
+		i_GRT:      in    std_logic;
 		o_ADR:      out   std_logic_vector(g_ADR_LINES-1  downto 0); 
 		o_DATA_MEM: out   std_logic_vector(g_DATA_LINES-1 downto 0);
 		o_WE:       out   std_logic;
 		o_MISS:     out   std_logic;
 		o_REQ:		out	  std_logic;
+		o_AR_REQ:   out   std_logic;
 		io_DATA:    inout std_logic_vector(g_DATA_LINES-1 downto 0)
 	);
 end component;
 
+component ARBITER is
+	generic(
+		g_SIZE: integer := 2
+	);
+	port(
+		i_REQ: in  std_logic_vector(g_SIZE-1 downto 0);
+		o_GRT: out std_logic_vector(g_SIZE-1 downto 0)
+	);
+end component;
+
 constant c_CLK_INTERVAL : time := 10ns; --100MHz
-signal s_CLK:  std_logic := '0'; 
+signal s_CLK:  std_logic := '0';
 
-constant c_ADR_LINES  : integer := 64;
-constant c_DATA_LINES : integer := 64;
-signal   s_ADR_CPU    : std_logic_vector(c_ADR_LINES-1  downto 0);
-signal   s_ADR_RAM    : std_logic_vector(c_ADR_LINES-1  downto 0);
-signal   s_DATA_IN    : std_logic_vector(c_DATA_LINES-1 downto 0);
-signal   s_DATA_OUT   : std_logic_vector(c_DATA_LINES-1 downto 0);
-signal   s_DATA       : std_logic_vector(c_DATA_LINES-1 downto 0);
-signal   s_WE_CPU, s_WE_RAM, s_MISS         : std_logic;
-signal   s_REQ, s_REQ_OUT, s_ACK, s_ACK_OUT : std_logic;
+constant c_CORE_COUNT: integer := 2;
+constant c_ADR_LINES:  integer := 64;
+constant c_DATA_LINES: integer := 64;
+signal   s_ARBITER_REQ, s_ARBITER_GRANT: std_logic_vector(c_CORE_COUNT-1 downto 0);
+	 
+type t_CORE_SIGNALS is record  
+	MISS:         std_logic;
+	WE_CPU:       std_logic;   	  
+	ADR_CPU:      std_logic_vector(c_ADR_LINES-1  downto 0);
+	DATA_CPU:     std_logic_vector(c_DATA_LINES-1 downto 0);  
+end record;
+type t_CORES_SIGNALS is array(0 to c_CORE_COUNT-1) of t_CORE_SIGNALS;
+signal s_CORES_SIGNALS: t_CORES_SIGNALS;
 
+type t_RAM_SIGNALS is record
+	ADR_RAM:    std_logic_vector(c_ADR_LINES-1  downto 0);
+	DATA_RAM_IN:    std_logic_vector(c_DATA_LINES-1 downto 0);
+	DATA_RAM_OUT:   std_logic_vector(c_DATA_LINES-1 downto 0);  
+	WE_RAM:     std_logic;
+end record;
+signal s_RAM_SIGNALS: t_RAM_SIGNALS;
+	
+type t_SYNC_SIGNALS is record
+	REQ, REQ_OUT, ACK, ACK_OUT: std_logic;
+end record;
+signal s_SYNC_SIGNALS: t_SYNC_SIGNALS;
 
 begin
 	
@@ -241,35 +269,45 @@ begin
 		s_CLK  <= not s_CLK;
 	end process;
 	
-	cpu:   SUBLEQ_CPU
+	cpu1: SUBLEQ_CPU
 		port map(
 			i_CLK   => s_CLK,
 			i_RST   => '0',
-			i_MISS  => s_MISS,
-			o_WE    => s_WE_CPU,
-			o_ADR   => s_ADR_CPU,
-			io_DATA => s_DATA
+			i_MISS  => s_CORES_SIGNALS(0).MISS,
+			o_WE    => s_CORES_SIGNALS(0).WE_CPU,
+			o_ADR   => s_CORES_SIGNALS(0).ADR_CPU,
+			io_DATA => s_CORES_SIGNALS(0).DATA_CPU
+		);
+	
+	cpu2: SUBLEQ_CPU
+		port map(
+			i_CLK   => s_CLK,
+			i_RST   => '0',
+			i_MISS  => s_CORES_SIGNALS(1).MISS,
+			o_WE    => s_CORES_SIGNALS(1).WE_CPU,
+			o_ADR   => s_CORES_SIGNALS(1).ADR_CPU,
+			io_DATA => s_CORES_SIGNALS(1).DATA_CPU
 		);
 		
-	ram:   RAM1DF
+	ram: RAM1DF
 		port map(
-			i_DATA => s_DATA_OUT, 
-			i_ADR  => s_ADR_RAM,
-			i_WE   => s_WE_RAM,
+			i_DATA => s_RAM_SIGNALS.DATA_RAM_IN, 
+			i_ADR  => s_RAM_SIGNALS.ADR_RAM,
+			i_WE   => s_RAM_SIGNALS.WE_RAM,
 			i_WCLK => s_CLK,
-			i_REQ  => s_REQ_OUT,
-			o_DATA => s_DATA_IN,
-			o_ACK  => s_ACK
+			i_REQ  => s_SYNC_SIGNALS.REQ_OUT,
+			o_DATA => s_RAM_SIGNALS.DATA_RAM_OUT,
+			o_ACK  => s_SYNC_SIGNALS.ACK
 		);
 		
-	sync:  SYNC2H
+	sync: SYNC2H
 		port map(
-			i_D1   => s_REQ,
-			i_D2   => s_ACK,
+			i_D1   => s_SYNC_SIGNALS.REQ,
+			i_D2   => s_SYNC_SIGNALS.ACK,
 			i_CLK1 => s_CLK,
 			i_CLK2 => s_CLK,
-			o_Q1   => s_REQ_OUT,
-			o_Q2   => s_ACK_OUT
+			o_Q1   => s_SYNC_SIGNALS.REQ_OUT,
+			o_Q2   => s_SYNC_SIGNALS.ACK_OUT
 		);
 	
 	cache1: CACHE
@@ -281,17 +319,54 @@ begin
 		)
 		port map(
 			i_CLK       => s_CLK,
-			i_ADR       => s_ADR_CPU,
-			i_DATA_MEM  => s_DATA_IN,
-			i_WE        => s_WE_CPU,
-			i_ACK       => s_ACK_OUT,
+			i_ADR       => s_CORES_SIGNALS(0).ADR_CPU,
+			i_DATA_MEM  => s_RAM_SIGNALS.DATA_RAM_OUT,
+			i_WE        => s_CORES_SIGNALS(0).WE_CPU,
+			i_ACK       => s_SYNC_SIGNALS.ACK_OUT,
 			i_RST       => '0',
-			o_ADR       => s_ADR_RAM,
-			o_DATA_MEM  => s_DATA_OUT,
-			o_WE        => s_WE_RAM,
-			o_MISS      => s_MISS,
-			o_REQ       => s_REQ,
-			io_DATA     => s_DATA
+			i_GRT       => s_ARBITER_GRANT(0),
+			o_ADR       => s_RAM_SIGNALS.ADR_RAM,
+			o_DATA_MEM  => s_RAM_SIGNALS.DATA_RAM_IN,
+			o_WE        => s_RAM_SIGNALS.WE_RAM,
+			o_MISS      => s_CORES_SIGNALS(0).MISS,
+			o_REQ       => s_SYNC_SIGNALS.REQ,
+			o_AR_REQ    => s_ARBITER_REQ(0),
+			io_DATA     => s_CORES_SIGNALS(0).DATA_CPU
+		);
+	
+	cache2: CACHE
+		generic map(
+			--g_ADR_LINES  : integer := 64;
+			--g_DATA_LINES : integer := 64;
+			g_LINE_SIZE => 1,
+			g_MEM_LINES => 1
+		)
+		port map(
+			i_CLK       => s_CLK,
+			i_ADR       => s_CORES_SIGNALS(1).ADR_CPU,
+			i_DATA_MEM  => s_RAM_SIGNALS.DATA_RAM_OUT,
+			i_WE        => s_CORES_SIGNALS(1).WE_CPU,
+			i_ACK       => s_SYNC_SIGNALS.ACK_OUT,
+			i_RST       => '0',
+			i_GRT       => s_ARBITER_GRANT(1),
+			o_ADR       => s_RAM_SIGNALS.ADR_RAM,
+			o_DATA_MEM  => s_RAM_SIGNALS.DATA_RAM_IN,
+			o_WE        => s_RAM_SIGNALS.WE_RAM,
+			o_MISS      => s_CORES_SIGNALS(1).MISS,
+			o_REQ       => s_SYNC_SIGNALS.REQ,
+			o_AR_REQ    => s_ARBITER_REQ(1),
+			io_DATA     => s_CORES_SIGNALS(1).DATA_CPU
+		);
+		
+	
+		
+	arbiter2: ARBITER
+		generic map(
+			g_SIZE => c_CORE_COUNT
+		)
+		port map(
+			i_REQ => s_ARBITER_REQ,
+			o_GRT => s_ARBITER_GRANT
 		);
 	
 end architecture;
