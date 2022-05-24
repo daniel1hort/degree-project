@@ -26,9 +26,10 @@ use ieee.numeric_std.all;
 
 entity SUBLEQ_CPU is
 	generic(
-		g_ADR_LINES  : integer := 64;
+		g_ADR_LINES:  integer := 64;
 		-- bigger or equal to g_ADR_LINES due to SUBLEQ requirements
-		g_DATA_LINES : integer := 64 
+		g_DATA_LINES: integer := 64;
+		g_LC_START:   integer := 0
 	);
 	port(
 		i_CLK   : in    std_logic;
@@ -78,8 +79,8 @@ begin
 	begin
 		
 		if rising_edge(i_RST) or s_STATE = INITIATE then
-			s_ADR     <= (others => '0');
-			s_REL_ADR <= (others => '0');
+			s_ADR     <= std_logic_vector(to_unsigned(g_LC_START, g_ADR_LINES));
+			s_REL_ADR <= std_logic_vector(to_unsigned(g_LC_START, g_ADR_LINES));
 			s_STATE   <= FETCH_ADR_A;
 			s_WE      <= '0'; 
 			s_DATA    <= (others => '0');
@@ -156,7 +157,8 @@ architecture CPU_TB of CPU_TB is
 component SUBLEQ_CPU is
 	generic(
 		g_ADR_LINES  : integer := 64;
-		g_DATA_LINES : integer := 64 
+		g_DATA_LINES : integer := 64;
+		g_LC_START   : integer := 0
 	);
 	port(
 		i_CLK    : in    std_logic;
@@ -235,8 +237,8 @@ constant c_CLK_INTERVAL : time := 10ns; --100MHz
 signal s_CLK:  std_logic := '0';
 
 constant c_CORE_COUNT: integer := 2;
-constant c_ADR_LINES:  integer := 64;
-constant c_DATA_LINES: integer := 64;
+constant c_ADR_LINES:  integer := 8;
+constant c_DATA_LINES: integer := 8;
 signal   s_ARBITER_REQ, s_ARBITER_GRANT: std_logic_vector(c_CORE_COUNT-1 downto 0);
 	 
 type t_CORE_SIGNALS is record  
@@ -270,6 +272,11 @@ begin
 	end process;
 	
 	cpu1: SUBLEQ_CPU
+		generic map(
+			g_ADR_LINES  => c_ADR_LINES,
+			g_DATA_LINES => c_DATA_LINES,
+			g_LC_START   => 0
+		)
 		port map(
 			i_CLK   => s_CLK,
 			i_RST   => '0',
@@ -280,6 +287,11 @@ begin
 		);
 	
 	cpu2: SUBLEQ_CPU
+		generic map(
+			g_ADR_LINES  => c_ADR_LINES,
+			g_DATA_LINES => c_DATA_LINES,
+			g_LC_START   => 128
+		)
 		port map(
 			i_CLK   => s_CLK,
 			i_RST   => '0',
@@ -290,6 +302,11 @@ begin
 		);
 		
 	ram: RAM1DF
+		generic map(
+			g_ADR_LINES  => c_ADR_LINES,
+			g_DATA_LINES => c_DATA_LINES,
+			g_MEM_SIZE   => 256
+		)
 		port map(
 			i_DATA => s_RAM_SIGNALS.DATA_RAM_IN, 
 			i_ADR  => s_RAM_SIGNALS.ADR_RAM,
@@ -312,10 +329,10 @@ begin
 	
 	cache1: CACHE
 		generic map(
-			--g_ADR_LINES  : integer := 64;
-			--g_DATA_LINES : integer := 64;
-			g_LINE_SIZE => 8,
-			g_MEM_LINES => 32
+			g_ADR_LINES  => c_ADR_LINES,
+			g_DATA_LINES => c_DATA_LINES,
+			g_LINE_SIZE  => 8,
+			g_MEM_LINES  => 8
 		)
 		port map(
 			i_CLK       => s_CLK,
@@ -336,10 +353,10 @@ begin
 	
 	cache2: CACHE
 		generic map(
-			--g_ADR_LINES  : integer := 64;
-			--g_DATA_LINES : integer := 64;
-			g_LINE_SIZE => 1,
-			g_MEM_LINES => 1
+			g_ADR_LINES  => c_ADR_LINES,
+			g_DATA_LINES => c_DATA_LINES,
+			g_LINE_SIZE  => 8,
+			g_MEM_LINES  => 8
 		)
 		port map(
 			i_CLK       => s_CLK,

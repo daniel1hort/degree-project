@@ -4,4 +4,12 @@ ZERO ZERO *
 .DATA 4
 .DATA 2
 .DATA b
+.ORG 128
+y r1 ? 
+r1 x ? 
+y y ? 
+ZERO ZERO *
+.DATA 12
+.DATA 7
+.DATA 0
 .DATA 0

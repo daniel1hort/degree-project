@@ -1,4 +1,4 @@
-;.ORG 10		; set location counter to 10
+;// FIRST CORE PROGRAM //
 a b				; b = b - a
 a				; a = a - a or a = 0
 .END			; end of program
@@ -6,3 +6,18 @@ a				; a = a - a or a = 0
 a: .DATA 4		; a points to memory location with value 4
 b: .DATA 2		; b points to memory location with value 2
 .DATA b			; can aslo store a label's value
+
+;-------------------------------------------------------------------
+
+;// SECOND CORE PROGRAM //
+.ORG 128        ; set location counter to 128
+y r1			; r1 = -b
+r1 x            ; x = x + b
+y               ; y = 0
+.END			; end of program
+				; empty line
+x:  .DATA 12	; x points to memory location with value 12
+y:  .DATA 7		; y points to memory location with value 7
+r1: .DATA 0		; r1 points to memory location with value r1
+
+; at the end will be added symbol ZERO which is common for the cores
