@@ -6,10 +6,15 @@ ZERO ZERO *
 .DATA b
 .ORG 128
 y r1 ? 
-r1 x ? 
-y y ? 
+one r1 ? 
+x r2 ? 
+x x ? 
+r2 x ? 
+one r1 loopWJMS 
 ZERO ZERO *
 .DATA 12
 .DATA 7
 .DATA 0
+.DATA 0
+.DATA -1
 .DATA 0

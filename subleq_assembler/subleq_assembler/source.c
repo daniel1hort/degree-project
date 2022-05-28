@@ -30,6 +30,7 @@ void parse_options(int argc, char** argv) {
 			}
 			else {
 				fprintf_s(stderr, "%s must have a value\n", argv[pos - 1]);
+				exit(EXIT_FAILURE);
 			}
 		}
 		else if (argc >= pos && (_stricmp(argv[pos - 1], "-s") == 0 || _stricmp(argv[pos - 1], "--size") == 0))
@@ -39,6 +40,7 @@ void parse_options(int argc, char** argv) {
 				int result = sscanf_s(argv[pos], "%d", &value);
 				if (result == 0) {
 					fprintf_s(stderr, "%s value must be a number, will assume default value 0\n", argv[pos - 1]);
+					exit(EXIT_FAILURE);
 				}
 				else {
 					file_size_in_words = value;
@@ -46,6 +48,7 @@ void parse_options(int argc, char** argv) {
 			}
 			else {
 				fprintf_s(stderr, "%s must have a value\n", argv[pos - 1]);
+				exit(EXIT_FAILURE);
 			}
 		}
 		else if (argc >= pos && (_stricmp(argv[pos - 1], "-w") == 0 || _stricmp(argv[pos - 1], "--word") == 0))
@@ -55,9 +58,11 @@ void parse_options(int argc, char** argv) {
 				int result = sscanf_s(argv[pos], "%d", &value);
 				if (result == 0) {
 					fprintf_s(stderr, "%s value must be a number, will assume default value 8\n", argv[pos - 1]);
+					exit(EXIT_FAILURE);
 				}
 				else if (value < 1 || value > 8) {
 					fprintf_s(stderr, "%s value must be between 1 and 8\n", argv[pos - 1]);
+					exit(EXIT_FAILURE);
 				}
 				else {
 					word_size_in_bytes = value;
@@ -65,6 +70,7 @@ void parse_options(int argc, char** argv) {
 			}
 			else {
 				fprintf_s(stderr, "%s must have a value\n", argv[pos - 1]);
+				exit(EXIT_FAILURE);
 			}
 		}
 	}

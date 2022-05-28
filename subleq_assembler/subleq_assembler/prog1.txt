@@ -1,6 +1,29 @@
+reset: .MACRO p
+	p
+.ENDM
+
+add: .MACRO num1 num2
+	num2   r1
+	r1     num1
+	@reset r1
+.ENDM
+
+sub: .MACRO num1 num2
+	num2 num1
+.ENDM
+
+mult: .MACRO a b
+	@SUB	r1 b
+	@SUB	r1 one
+	@SUB	r2 a
+	@RESET	a
+	loop: @SUB	a r2
+	one r1 loop
+.ENDM
+
 ;// FIRST CORE PROGRAM //
-a b				; b = b - a
-a				; a = a - a or a = 0
+@SUB b a		; b = b - a
+@RESET a		; a = a - a or a = 0
 .END			; end of program
 				; empty line
 a: .DATA 4		; a points to memory location with value 4
@@ -11,13 +34,13 @@ b: .DATA 2		; b points to memory location with value 2
 
 ;// SECOND CORE PROGRAM //
 .ORG 128        ; set location counter to 128
-y r1			; r1 = -b
-r1 x            ; x = x + b
-y               ; y = 0
+@MULT x y		; x = x + y, uses r1
 .END			; end of program
 				; empty line
 x:  .DATA 12	; x points to memory location with value 12
 y:  .DATA 7		; y points to memory location with value 7
-r1: .DATA 0		; r1 points to memory location with value r1
+r1: .DATA 0		; r1 points to memory location with value 0
+r2: .DATA 0		; r2 points to memory location with value 0
+ONE: .DATA -1
 
 ; at the end will be added symbol ZERO which is common for the cores
