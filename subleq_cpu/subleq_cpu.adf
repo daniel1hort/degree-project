@@ -42,7 +42,7 @@ CDebugASDBName=$dsn/src/subleq_cpu.asdb
 [SpecTracer]
 WindowVisible=0
 [HierarchyViewer]
-HierarchyInformation=arbiter_tb|ARBITER_TB|0 cpu_tb|CPU_TB|0
+HierarchyInformation=cpu_tb|CPU_TB|0
 ShowHide=ShowTopLevel
 Selected=
 [LocalVhdlSets]

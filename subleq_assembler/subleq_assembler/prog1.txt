@@ -2,45 +2,47 @@ reset: .MACRO p
 	p
 .ENDM
 
-add: .MACRO num1 num2
-	num2   r1
-	r1     num1
+sub: .MACRO a b
+	b a
+.ENDM
+
+add: .MACRO a b
+	@SUB r1 b
+	@SUB a r1
 	@reset r1
 .ENDM
 
-sub: .MACRO num1 num2
-	num2 num1
-.ENDM
-
-mult: .MACRO a b
-	@SUB	r1 b
-	@SUB	r1 one
-	@SUB	r2 a
-	@RESET	a
-	loop: @SUB	a r2
+MULT: .MACRO a b
+	@SUB r1 b
+	@SUB r1 one
+	@SUB r2 a
+	@RESET a
+	loop: @SUB a r2
 	one r1 loop
+	@RESET r1
+	@RESET r2
 .ENDM
 
 ;// FIRST CORE PROGRAM //
-@SUB b a		; b = b - a
-@RESET a		; a = a - a or a = 0
-.END			; end of program
-				; empty line
-a: .DATA 4		; a points to memory location with value 4
-b: .DATA 2		; b points to memory location with value 2
-.DATA b			; can aslo store a label's value
+@SUB b a
+@RESET a
+.END
+
+a: .DATA 4
+b: .DATA 2
 
 ;-------------------------------------------------------------------
 
 ;// SECOND CORE PROGRAM //
-.ORG 128        ; set location counter to 128
-@MULT x y		; x = x + y, uses r1
-.END			; end of program
-				; empty line
-x:  .DATA 12	; x points to memory location with value 12
-y:  .DATA 7		; y points to memory location with value 7
-r1: .DATA 0		; r1 points to memory location with value 0
-r2: .DATA 0		; r2 points to memory location with value 0
+.ORG 128
+@MULT x y
+@MULT x y
+.END
+
+x:  .DATA 3
+y:  .DATA 2
+r1: .DATA 0
+r2: .DATA 0
 ONE: .DATA -1
 
 ; at the end will be added symbol ZERO which is common for the cores

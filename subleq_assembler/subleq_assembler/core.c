@@ -115,10 +115,10 @@ int macro_has_parameter(MACRO_DEF macro, const char* name) {
 	return -1;
 }
 
-int macro_get_parameter_count(MACRO_DEF macro) {
+int param_get_parameter_count(PARAM_DEF* params) {
 	int count = 0;
 	for (int i = 0; i < 5; i++) {
-		PARAM_DEF param = macro.params[i];
+		PARAM_DEF param = params[i];
 		if ((param.status & PARAM_STATUS_NAME) != 0)
 			count++;
 	}
@@ -320,6 +320,12 @@ void raise_error(int line, int column, ERROR_TYPE error, const char* info) {
 	case ERROR_MACRO_NAME_MISSING:
 		fprintf_s(stderr, "[%s] [error] at line %d, column %d: label is mandatory for macro definition.\n", __TIME__, line, column);
 		break;
+	case ERROR_TOO_FEW_ARGUMENTS:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: too few arguments provided for macro '%s'.\n", __TIME__, line, column, info);
+		break;
+	case ERROR_TOO_MANY_ARGUMENTS:
+		fprintf_s(stderr, "[%s] [error] at line %d, column %d: too many arguments provided for macro '%s'.\n", __TIME__, line, column, info);
+		break;
 	}
 }
 
@@ -359,7 +365,7 @@ BOOL symbol_enforce_ZERO(LINE_DEF line) {
 void step1(FILE* stream1, FILE* stream2) {
 	char buf[SMALL_SIZE + 1], discard[SMALL_SIZE + 1];
 	char* word, * next_word = NULL;
-	int line_count = -1;
+	int line_count = 0;
 	int lc = 0;
 	BOOL line_has_label;
 	BOOL inside_macro_definition = FALSE;
@@ -449,7 +455,7 @@ void step1(FILE* stream1, FILE* stream2) {
 				if (line_has_label == FALSE)
 					raise_error(line_count, word - buf, ERROR_MACRO_NAME_MISSING, NULL);
 
-				macro_set(&main_macro, lines_count, 0, line_label.name);
+				macro_set(&main_macro, line_count, 0, line_label.name);
 				word = strtok_s(next_word, " \t", &next_word);
 				for (int i = 0; i < 5 && word != NULL; i++) {
 					param_set_name(main_macro.params + i, word);
@@ -461,7 +467,7 @@ void step1(FILE* stream1, FILE* stream2) {
 			}
 			else if (_stricmp(word + 1, "ENDM") == 0) {
 				if (inside_macro_definition == FALSE)
-					raise_error(lines_count, word - buf, ERROR_ENDM_OUTSIDE_MACRO, NULL);
+					raise_error(line_count, word - buf, ERROR_ENDM_OUTSIDE_MACRO, NULL);
 
 				main_macro.line_count = lines_count - main_macro.first_line;
 				macro_add(main_macro);
@@ -494,6 +500,13 @@ void step1(FILE* stream1, FILE* stream2) {
 				param_set_name((inside_macro_definition ? (line.params + i) : (params + i)), word);
 				word = strtok_s(next_word, " \t", &next_word);
 			}
+
+			int macro_param_count = param_get_parameter_count(macros[macro_adr].params);
+			int params_count = param_get_parameter_count((inside_macro_definition ? line.params : params));
+			if (macro_param_count > params_count)
+				raise_error(line_count, 0, ERROR_TOO_FEW_ARGUMENTS, macros[macro_adr].name);
+			else if (macro_param_count < params_count)
+				raise_error(line_count, 0, ERROR_TOO_MANY_ARGUMENTS, macros[macro_adr].name);
 
 			line.type = LINE_MACRO;
 			if (inside_macro_definition) {
