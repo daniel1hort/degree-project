@@ -1,0 +1,36 @@
+\documentclass[../main.tex]{subfiles}
+\graphicspath{{\subfix{../assets/}}}
+
+\begin{document}
+
+Sunt șanse mari să citești această lucrare pe un ecran. Dacă mă înșel te rog să mă scuzi, 
+de fapt, poți chiar să sari la următorul paragraf, deoarece nu va face sens ce urmează să spun
+dacă ai ales să listezi documentul de față. Dacă mai ești aici înseamnă că, probabil, folosești un dispozitiv,
+numit în limbaj uzual drept calculator, pentru a citi aceste cuvinte. La baza acestui calculator
+se află procesorul sau \acrshort{cpu}. Nu din întâmplare procesorul se află și la baza acestei
+lucrări. 
+
+În continuare vom explora cum funcționează un procesor, ce tipuri de arhitecturi există,
+vom descoperi că o instrucțiune e tot ce ai nevoie, chiar și mai puțin de atât și vom scrie
+niste programe într-un limbaj de asamblare creat special pentru procesorul pe care l-am făcut.
+
+Pentru acest proiect am decis să proiectez un procesor \emph{multi-core} cu arhitectură
+\acrshort{subleq}\cite{subleq} în \acrshort{vhdl}. Pentru a testa procesorul voi realiza și un \emph{assembler}
+care să ia codul scris în limbaj de asamblare și să îl traducă în instrucțiuni pe care
+acesta le poate executa.
+
+\acrshort{subleq}\cite{subleq} vine de la \emph{\acrlong{subleq}} și este o arhitectură/limbaj ce face parte
+din categoria \acrfull{oisc}. Singura instructiune din arhitectura \acrshort{subleq} este subleq,
+care facilitează scăderea ca operatie aritmetică pentru prelucrarea datelor dar și salt condiționat
+de rezultatul scăderii. Vom dezvolta mai mult în capitolele următoare.
+
+``\emph{Your desktop computer have more than one billion of transistors in it, and it consumes 100 watts to read this text on it.}'',
+``\emph{Because the detailed instruction manual of todays desktop (x86) CPU-s and IO system is approximately 50 000 page long, and no one completely understands how they work.}''
+\cite{dawn}. Motivațiile pentru existența unei astfel de arhitecturi sunt diverse. Pentru unii e simplă curiozitate,
+aceștia se întreabă dacă e posibil să existe o arhitectură de tip \acrshort{oisc}. Pentru alții acționează ca
+instrument didactic, până la urmă e un concept foarte simplu și ușor de analizat și de predat. Pentru Geri,
+creatorul sistemului de operare \emph{DawnOS}\cite{dawn}, e o alternativă cu un cost de producție foarte redus,
+consum minim de resurse și foarte ușor de înțeles. Cele două fraze de la începutul paragrafului sunt doar câteva
+din răspunsurile lui Geri la întrebarea: ``\emph{Why technologies like Dawn and SUBLEQ are important?}''
+
+\end{document}

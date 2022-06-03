@@ -1,0 +1,47 @@
+\documentclass[12pt, a4paper]{uptacthesis}
+\usepackage[romanian]{babel}
+\graphicspath{{assets/}}
+\usepackage{subfiles}
+
+\usepackage[toc, acronym]{glossaries}
+\makenoidxglossaries
+\newacronym{subleq}{SUBLEQ}{SUbstract and Branch if LEss than or eQual to 0}
+\newacronym{cisc}{CISC}{Complex Instruction Set Computer}
+\newacronym{risc}{RISC}{Reduced Instruction Set Computer}
+\newacronym{cpu}{CPU}{Central Processing Unit}
+\newacronym{vhdl}{VHDL}{Very High Speed Integrated Circuit Hardware Description Language}
+\newacronym{oisc}{OISC}{One Instruction Set Computer}
+\newacronym{urisc}{URISC}{Ultimate Reduced Instruction Set Computer}
+
+\title{Proiectarea și simularea unui procesor multi-core cu arhitectură SUBLEQ}
+\author{\large\bfseries
+    Candidat: Daniel-Bogdan Horț\\[1ex]
+    Coordonator științific: Ș.l.dr.ing.~Eugen Gurban\\[2cm]
+}
+\date{\large Sesiunea 2022}
+
+\begin{document}
+\maketitle
+
+\chapter*{Rezumat}
+\subfile{chapters/abstract}
+
+\tableofcontents
+
+\chapter{Introducere}
+\subfile{chapters/intro}
+
+\chapter{Implementare}
+\subfile{chapters/intro}
+\cite{asl}
+\acrshort{subleq}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+
+\cleardoublepage
+\addcontentsline{toc}{chapter}{\listfigurename}
+\listoffigures
+
+\printnoidxglossary[type=\acronymtype, title=Listă de abrevieri]
+\end{document}
