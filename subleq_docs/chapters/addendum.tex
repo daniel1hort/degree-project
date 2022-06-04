@@ -2,5 +2,106 @@
 \graphicspath{{\subfix{../assets/}}}
 
 \begin{document}
-    
+
+\chapter{Entități VHDL} \label{appendix:entities}
+\begin{lstlisting}[language=VHDL, caption={Entitatea procesorului}, label={lst:cpu}]
+entity SUBLEQ_CPU is
+	generic(
+		g_ADR_LINES  : integer := 64;
+		-- bigger or equal to g_ADR_LINES due to SUBLEQ requirements
+		g_DATA_LINES : integer := 64;
+		g_LC_START   : integer := 0
+	);
+	port(
+		i_CLK:   in    std_logic;
+		i_RST:   in    std_logic;
+		i_MISS:  in    std_logic;
+		o_WE:    out   std_logic; -- WRITE ENABLE
+		o_ADR:   out   std_logic_vector(g_ADR_LINES-1  downto 0);
+		io_DATA: inout std_logic_vector(g_DATA_LINES-1 downto 0) 
+	);
+end entity;
+\end{lstlisting}
+
+\begin{lstlisting}[language=VHDL, caption={Entitatea memoriei RAM}, label={lst:ram}]
+entity RAM1DF is
+	generic(
+		g_ADR_LINES  : integer := 64;
+		g_DATA_LINES : integer := 64;
+		g_MEM_SIZE   : integer := 256
+	);
+	port(
+		i_DATA: in  std_logic_vector(g_DATA_LINES-1 downto 0);
+		i_ADR:  in  std_logic_vector(g_ADR_LINES-1  downto 0);
+		i_WE:   in  std_logic;
+		i_WCLK: in  std_logic;
+		i_REQ:  in  std_logic;
+		o_DATA: out std_logic_vector(g_DATA_LINES-1 downto 0);
+		o_ACK:  out std_logic := '0'
+	);
+end entity;
+\end{lstlisting}
+
+\begin{lstlisting}[language=VHDL, caption={Entitatea bistabilului tip D}, label={lst:flipflopd}]
+entity D_FF is
+	port(
+		i_D:   in  std_logic;
+		i_CLK: in  std_logic;
+		o_Q:   out std_logic := '0'
+	);
+end entity;
+\end{lstlisting}
+
+\begin{lstlisting}[language=VHDL, caption={Entitatea circuitului de sincronizare}, label={lst:sync}]
+entity SYNC2H is
+	port(
+		i_D1:   in  std_logic;
+		i_D2:   in  std_logic;
+		i_CLK1: in  std_logic;
+		i_CLK2: in  std_logic;
+		o_Q1:   out std_logic;
+		o_Q2:   out std_logic
+	);
+end entity;
+\end{lstlisting}
+
+\begin{lstlisting}[language=VHDL, caption={Entitatea arbitrului}, label={lst:arbiter}]
+entity ARBITER is
+	generic(
+		g_SIZE : integer := 2
+	);
+	port(
+		i_REQ: in  std_logic_vector(g_SIZE-1 downto 0);
+		o_GRT: out std_logic_vector(g_SIZE-1 downto 0)
+	);
+end entity;
+\end{lstlisting}
+
+\begin{lstlisting}[language=VHDL, caption={Entitatea memoriei cache}, label={lst:cache}]
+entity CACHE is
+	generic(
+		g_ADR_LINES  : integer := 64;
+		g_DATA_LINES : integer := 64;
+		g_LINE_SIZE  : integer := 8;
+		g_MEM_LINES  : integer := 32
+	);
+	port(
+		i_CLK:      in    std_logic;
+		i_ADR:      in    std_logic_vector(g_ADR_LINES-1  downto 0);
+		i_DATA_MEM: in    std_logic_vector(g_DATA_LINES-1	downto 0);
+		i_WE:       in    std_logic;
+		i_ACK:      in    std_logic;
+		i_RST:      in    std_logic;
+		i_GRT:      in    std_logic;
+		o_ADR:      out   std_logic_vector(g_ADR_LINES-1  downto 0); 
+		o_DATA_MEM: out   std_logic_vector(g_DATA_LINES-1 downto 0);
+		o_WE:       out   std_logic;
+		o_MISS:     out   std_logic;
+		o_REQ:      out	  std_logic;
+		o_AR_REQ:   out   std_logic;
+		io_DATA:    inout std_logic_vector(g_DATA_LINES-1 downto 0)
+	);
+end entity;
+\end{lstlisting}
+
 \end{document}
