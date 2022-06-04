@@ -31,10 +31,23 @@
 \chapter{Introducere}
 \subfile{chapters/intro}
 
+\chapter{Alte implementari}
+\subfile{chapters/others}
+
+\chapter{Fundamentare teoretica}
+\subfile{chapters/theory}
+
 \chapter{Implementare}
-\subfile{chapters/intro}
-\cite{asl}
-\acrshort{subleq}
+\section{Procesor}
+\subfile{chapters/cpu}
+\section{Assembler}
+\subfile{chapters/assembler}
+
+\chapter{Manual de utilizare}
+\subfile{chapters/manual}
+
+\chapter{Concluzii}
+\subfile{chapters/conclusion}
 
 \bibliographystyle{plain}
 \bibliography{refs}
@@ -44,4 +57,9 @@
 \listoffigures
 
 \printnoidxglossary[type=\acronymtype, title=Listă de abrevieri]
+
+\cleardoublepage
+\addcontentsline{toc}{chapter}{Anexe}
+\chapter*{Anexe}
+\subfile{chapters/addendum}
 \end{document}
