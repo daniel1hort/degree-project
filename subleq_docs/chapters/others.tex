@@ -96,7 +96,7 @@ operatie de scriere în acest bloc, în această situație blocul de memorie din
 neactualizate, ca urmare apare un conflict ce poate duce la consecințe foarte grave. Pentru a rezolva problema coerenței
 trebuie implementat un protocol de coerență. În lucrare au ales să folosească cel mai simplu protocol, protocolul \acrfull{vi},
 care se comportă după cum arată diagrama de stare din figura \ref{fig:inkel_coherence}. Fiecare bloc de memorie din cache
-se poate afla în una din cele 2 stări. Revenind la exemplul dat, acum blocul din cache-ul aferent lui Core B trece În
+se poate afla în una din cele 2 stări. Revenind la exemplul dat, acum blocul din cache-ul aferent lui Core B trece în
 starea Invalid și va genera un \emph{cache miss} la citire sau scriere.
 
 \begin{figure}[h]

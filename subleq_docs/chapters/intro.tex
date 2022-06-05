@@ -3,34 +3,56 @@
 
 \begin{document}
 
-Sunt șanse mari să citești această lucrare pe un ecran. Dacă mă înșel te rog să mă scuzi, 
-de fapt, poți chiar să sari la următorul paragraf, deoarece nu va face sens ce urmează să spun
-dacă ai ales să listezi documentul de față. Dacă mai ești aici înseamnă că, probabil, folosești un dispozitiv,
-numit în limbaj uzual drept calculator, pentru a citi aceste cuvinte. La baza acestui calculator
-se află procesorul sau \acrshort{cpu}. Nu din întâmplare procesorul se află și la baza acestei
-lucrări. 
+Aparatele de calcul au prins o perioada rapidă de evoluție la începutul anilor 1940 odată cu apariția primului
+calculator care a folosit tuburi electronice cu vid. 10 ani mai târziu avem testul Turing, creat de matematicianul
+britanic Alan Turing și primul procesor comercial, apoi primul procesor care folosește tranzistori și primul
+limbaj de programare de nivel înalt, \acrfull{fortran}, dezvoltat la IBM. Totul s-a schimbat în anii 1970, când
+microprocesoarele intră în scenă. Până atunci toate procesoarele erau pentru uz comercial sau intern într-o companie,
+erau scumpe, aveau un consum ridicat dar erau foarte puternice pentru standardele de atunci. Microprocesoarele au
+revoluționat industria deschizând piața pentru aparate electronice de uz casnic și individual. Având mai puține
+instrucțiuni dar un cost mai mic de producție, erau perfecte și fezabile pentru a le integra în autovehicule,
+aparate casnice, console portabile de jocuri, etc. În prezent putem purta acceași discuție despre \acrshort{cisc}
+vs \acrshort{risc}.
 
-În continuare vom explora cum funcționează un procesor, ce tipuri de arhitecturi există,
-vom descoperi că o instrucțiune e tot ce ai nevoie, chiar și mai puțin de atât și vom scrie
-niste programe într-un limbaj de asamblare creat special pentru procesorul pe care l-am făcut.
+Limbajele de programare au evoluat și ele în timp ca să fie cât mai ușor de folosit. Dar există o categorie care
+s-a axat pe a face munca programatorului mai grea sau limbaje create pentru a experimenta un fel nou de programare.
+\emph{``An esoteric programming language (ess-oh-terr-ick), or esolang, is a computer programming language designed to 
+experiment with weird ideas, to be hard to program in, or as a joke, rather than for practical use.''}\cite{esolangs}.
+Aceste limbaje au ca scop cel puțin una dintre următoarele:
+\textit{
+\begin{itemize}
+    \item Minimalism
+    \item New concepts
+    \item Weirdness
+    \item Themed
+    \item Brevity
+    \item Jokes
+    \item Obfuscation
+\end{itemize}}
 
-Pentru acest proiect am decis să proiectez un procesor \emph{multi-core} cu arhitectură
-\acrshort{subleq}\cite{subleq} în \acrshort{vhdl}. Pentru a testa procesorul voi realiza și un \emph{assembler}
-care să ia codul scris în limbaj de asamblare și să îl traducă în instrucțiuni pe care
-acesta le poate executa.
+La capitolul Minimalism putem vorbi de o întreagă specie de limbaje ezoterice, \acrfull{oisc} \cite{oisc}. Dar pe noi
+ne interesează \textbf{\acrfull{subleq}} \cite{subleq}, din simplul motiv că e cel mai popular. Cum funcționează
+\acrshort{subleq} și cât de popular este? Subleq e singura instructiune din limbaj, care poate fi considerat un limbaj
+de asamblare. Are 3 parametrii $A$ $B$ și $C$, toți sunt adrese. Procesorul va executa operația:
+\begin{equation*}
+    MEM[B] = MEM[B] - MEM[A]
+\end{equation*}
+și dacă rezultatul operației este mai mic sau egal cu 0 atunci procesorul sare cu execuția programului la adresa $C$.
 
-\acrshort{subleq}\cite{subleq} vine de la \emph{\acrlong{subleq}} și este o arhitectură/limbaj ce face parte
-din categoria \acrfull{oisc}. Singura instructiune din arhitectura \acrshort{subleq} este subleq,
-care facilitează scăderea ca operatie aritmetică pentru prelucrarea datelor dar și salt condiționat
-de rezultatul scăderii. Vom dezvolta mai mult în capitolele următoare.
+\acrshort{subleq} e atât de popular încât oamenii sâ scrie lucrări despre el, sa construiască sau să simuleze procesoare
+pe aceasta arhitectură, de asemenea și aceastâ lucrare e la fel. Există asambloare, există chiar mai multe versiuni ale
+limbajului, compilatoare și chiar un sistem de operare, DawnOS \cite{dawn}. Următoarele paragrafele conțin câteva dintre 
+motivațiile creatorului DawnOS \cite{dawn}, Geri. Sunt răspunsuri la întrebarea:
+``\emph{Why technologies like Dawn and SUBLEQ are important?}''.
 
-``\emph{Your desktop computer have more than one billion of transistors in it, and it consumes 100 watts to read this text on it.}'',
-``\emph{Because the detailed instruction manual of todays desktop (x86) CPU-s and IO system is approximately 50 000 page long, and no one completely understands how they work.}''
-\cite{dawn}. Motivațiile pentru existența unei astfel de arhitecturi sunt diverse. Pentru unii e simplă curiozitate,
-aceștia se întreabă dacă e posibil să existe o arhitectură de tip \acrshort{oisc}. Pentru alții acționează ca
-instrument didactic, până la urmă e un concept foarte simplu și ușor de analizat și de predat. Pentru Geri,
-creatorul sistemului de operare \emph{DawnOS}\cite{dawn}, e o alternativă cu un cost de producție foarte redus,
-consum minim de resurse și foarte ușor de înțeles. Cele două fraze de la începutul paragrafului sunt doar câteva
-din răspunsurile lui Geri la întrebarea: ``\emph{Why technologies like Dawn and SUBLEQ are important?}''
+\emph{``Your desktop computer have more than one billion of transistors in it, and it consumes 100 watts to read this text on it.}'',
+
+\emph{``Because the detailed instruction manual of todays desktop (x86) CPU-s and IO system is approximately 50 000 page long, and no one completely understands how they work.}''
+
+\emph{``Computers are driven by software written from 400 million lines of source code.''}
+
+În capitolele ce urmează vom explora mai multe lucruri interesante despre \acrshort{oisc} \cite{oisc}, \textbf{implementarea și
+simularea unui procesor multi-core cu arhitectura \acrshort{subleq} \cite{subleq}}, implementarea unui asamblor pentru a putea
+scrie cod ca să testăm procesorul, sintaxa limbajului și modul de utilizare a asamblorului, urmate de concluziile proiectului.
 
 \end{document}
