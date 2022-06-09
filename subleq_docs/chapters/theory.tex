@@ -2,5 +2,59 @@
 \graphicspath{{\subfix{../assets/}}}
 
 \begin{document}
-    
+
+\section{SUBLEQ}
+\subsection{Limbaje ezoterice}
+Limbajele de programare ezoterice se diferențiază față de cele obișnuite printr-o serie de factori, dar putem
+spune că eficiența sau ușurința de a le folosi nu se află printre factori. \acrshort{intercal} \cite{intercal} 
+este considerat primul limbaj ezoteric creat intenționat. În acest limbaj orice linie ce reprezintă o instrucțiune
+validă poate contine cuvântul cheie \emph{``PLEASE''}. Compilatorul astfel se așteaptă la un anumit nivel de politețe
+din partea programatorului. Dacă programul are prea puține sau prea multe apariții ale cuvântului \emph{``PLEASE''}
+atunci compilatorul va arunca o eroare. Aproximativ între $1/5$ până la $1/3$ din instrucțiuni trebuie să fie
+politicoase. Dacă o linie de cod nu este o instrucțiune validă atunci este ignorată. O metodă des întâlnită de a
+lăsa comentarii este de a folosi \emph{``PLEASE NOTE''} urmat de textul comentariului. \emph{``NOTE''} nu este
+o instrucțiune validă, motiv pentru care linia este ignorată, deci se comportă precum un comentariu.
+
+Cele mai populare limbaje ezoterice sunt \emph{Brainfuck} \cite{brainfuck} și \emph{Befunge} \cite{befunge}.
+\emph{Brainfuck} \cite{brainfuck} a fost inventa de către Urban Müller în 1993 într-o încercare de a scrie cel mai mic 
+compilator pentru sistemul de operare AmigaOS versiunea 2.0, rezultatul a fost un compilator de 240B. Limbajul
+consistă din o serie de comenzi ce servesc la manipularea unui vector de numere întregi, dimensiunea vectorului
+nu este precizată în specificațiile limbajului și deci implementări diferite lucrează cu vectori de dimensiuni
+diferite. \emph{Befunge} \cite{befunge} a fost inventat tot în 1993 de către Chris Pressey cu singurul scop de
+a fi cât mai greu de compilat. Este un limbaj bi-dimensional, ceea ce înseamnă ca folosește un grid cu o dimensiune
+fixă și ceea ce îl face greu de compilat este faptul că există comenzi ce modifică direcția de execuție a codului,
+astfel codul poate fi executat din toate cele 4 direcții cardinale. Ambele limbaje consistă numai din comenzi de o 
+singură literă, ceea ce face codul foarte greu de citit și de înteles, dând un nou înteles cuvântului \emph{obfuscat}.
+
+Pe lângă cele menționate anterior există alte 2 limbaje care transcend timpul prin natura lor. Unul dintre ele
+e un limbaj despre care se știe doar că niște călători în timp au confirmat existența lui cândva în viitor, cât
+despre celălalt, are la bază doar conceptul de \emph{loop} ce nu poate fi terminat decât prin legarea lui la
+durata de viață a unui număr sau concept pe care limbajul îl întelege. În teorie prin legarea unui \emph{loop} la univers,
+acesta s-ar termina odată cu moartea universului. Folosind comanda \emph{EXECUTE} limbajul poate fi folosit pentru a
+executa virtual orice, însă comanda poate fi folosită doar la finalul unui \emph{loop}, ceea ce poate presupune
+așteptarea unui perioade lungi de timp.
+
+Această secțiune servește drept introducere în minunata lume ezoterică a programării. Pentru mai multe detalii
+vizitați \cite{esolangs}.
+
+\subsection{OISC}
+\emph{\acrfull{oisc}} sau \emph{\acrfull{urisc}} \cite{oisc} este o categorie de limbaje de programare ezoterice 
+care au o singură instrucțiune, deși nu toate limbajele din acestă categorie sunt \emph{Turing complete} noi ne
+vom axa pe cele care sunt. Există 3 subcategorii de limbaje \acrshort{oisc} \cite{oisc}:
+\begin{itemize}
+    \item \emph{\acrlong{tta}}
+    \item \emph{Bit-manipulating machines}
+    \item \emph{Arithmetic-based Turing-complete machines}
+\end{itemize}
+
+\emph{\textbf{\acrfull{tta}}} e un design în care operațiile de calcul sunt efecte secundare a unui transport de memorie.
+De obicei niște regiștrii de memorie au o operație atribuită pe care o execută atunci când o operație de scriere
+are loc asupra registrului. De exemplu, într-un \acrshort{oisc} care folosește o instrucțiune de copiere a unei valori
+dintr-o locație de memorie în alta, poate fi implementat prin declanșarea unor regiștrii ce conțin operații aritmetice
+și instrucțiuni de salt. Deși se utilizează o singură instrucțiune, este necesară implementarea \emph{hardware} a 
+operațiilor ce se vor a fi executate, listă care poate conține orice număr arbitrar de operații.
+
+\emph{\textbf{Bit-manipulating machines}} este cea mai simplă clasă, aceste limbaje se folosesc de operații logice pe biti
+sau manipularea memoriei la nivel de bit.
+
 \end{document}
