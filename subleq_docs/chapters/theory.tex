@@ -54,7 +54,90 @@ dintr-o locație de memorie în alta, poate fi implementat prin declanșarea uno
 și instrucțiuni de salt. Deși se utilizează o singură instrucțiune, este necesară implementarea \emph{hardware} a 
 operațiilor ce se vor a fi executate, listă care poate conține orice număr arbitrar de operații.
 
-\emph{\textbf{Bit-manipulating machines}} este cea mai simplă clasă, aceste limbaje se folosesc de operații logice pe biti
-sau manipularea memoriei la nivel de bit.
+\emph{\textbf{Bit-manipulating machines}} este cea mai simplă clasă, aceste limbaje se folosesc de operații logice pe biți
+sau manipularea memoriei la nivel de bit. Exemple:
+\begin{itemize}
+    \item \emph{FlipJump} \cite{flipjump} este probabil cel mai simplu \acrshort{oisc} \cite{oisc}. Arată cu succes că
+    ai nevoie de aproape nimic pentru a putea face orice. Are o singură instrucțiune cu 2 parametrii $A$ și $B$, adrese către un
+    bit din memorie. Bitul care se află la adresa $A$ este negat, apoi execuția sare necondiționat la adresa $B$, echivalent cu:
+    \begin{center}\ttfamily
+        *A = !(*A);\\
+        JUMP B;
+    \end{center}
+    \item \emph{BitBitJump} \cite{bitbitjump} perminte copierea unui bit dintr-o locație de memorie în altă locație de memorie,
+    urmat de un salt necondiționat la o altă adresă. Se pare că acest proces este capabil de a executa orice operație, deoarece
+    prin copierea biților se poate modifica codul ce urmează a fi executat. Instrucțiunea are 3 parametrii și se comportă astfel:
+    \begin{center}\ttfamily
+        *A = *B;\\
+        JUMP C;
+    \end{center}
+    \item \emph{\acrshort{toga}} \cite{toga} este un alt limbaj care are o singură instrucțiune cu 2 parametrii. Numele vine de la \acrlong{toga}.
+    Particular pentru acest limbaj este separamea memoriei de date și memoriei de program. Din cauza acestui amănunt nu este
+    \emph{Turing complete}. Instrucțiunea se traduce în acest fel:
+    \begin{center}\ttfamily
+        MEMD[A] = !MEMD[A];\\
+        IF (MEMD[A]) JUMP MEMP[B];
+    \end{center}
+\end{itemize}
+
+\emph{\textbf{Arithmetic based Turing-complete Machines}} folosesc o operatie aritmetică și salt condiționat de rezultatul operației.
+În comparație cu celelalte 2 clase \acrshort{oisc}, aceasta este \emph{Turing complete} prin natura ei. Instrucțiunile operează
+cu numere întregi, care pot fi și adrese de memorie. Există o mulțime foarte mare de instrucțiuni în această subcategorie. Căteva exemple sunt:
+\begin{itemize}
+    \item \emph{\acrshort{addleq}} \cite{addleq} folosește operația de adunare:
+    \begin{center}\ttfamily
+        *B = *B + *A;\\
+        IF (*B <= 0) JUMP C;
+    \end{center}
+    \item \emph{\acrshort{djn}} \cite{djn} folosește operația de decrementare:
+    \begin{center}\ttfamily
+        *A = *A - 1;\\
+        IF (*A != 0) JUMP B;
+    \end{center}
+    \item \emph{\acrshort{p1eq}} \cite{p1eq} folosește operația de incrementare:
+    \begin{center}\ttfamily
+        IF (*A + 1 = *B) JUMP C;\\
+        *B = *A + 1;
+    \end{center}
+    \item \emph{\acrshort{subleq}} \cite{subleq} folosește operația de scădere:
+    \begin{center}\ttfamily
+        *B = *B - *A;\\
+        IF (*B <= 0) JUMP C;
+    \end{center}
+    \item \emph{Cryptoleq} \cite{cryptoleq} operează peste programe criptate:
+    \begin{center}\ttfamily
+        *B = $O_{1}$(*B, *A);\\
+        IF ($O_{2}$(*B) <= 0) JUMP C;
+    \end{center}
+    Operațiile $O_{1}$ și $O_{2}$ sunt definite în lucrarea \cite{encript_comp} astfel:
+    \begin{equation*}
+        O_{1}(x, y) = x^{-1} \cdot y\;\mathrm{mod}\; N^{2},
+    \end{equation*}
+    \begin{equation*}
+        O_{2}(x) = \left[\frac{x-1}{N}\right].
+    \end{equation*}
+    \item \emph{\acrshort{subleq}+} este o versiune a lui \acrshort{subleq} \cite{subleq} care folosește numere
+    negative pentru adresare indirectă a memoriei. Se presupune că această variantă este \emph{Turing complete} și fără
+    a folosi cod ce se modifică la execuție dar nu a fost demonstrat încă.
+\end{itemize}
+
+\section{Assembler}
+\subsection{\emph{Two-Pass Assembler}}
+\cite{asl}
+\subsection{Directive}
+\cite{asl}
+\subsection{MACRO}
+\cite{asl}
+\subsection{Analiză lexicală}
+\cite{lexer}
+
+\section{Procesor}
+\subsection{Dispozitive cu stări finite}
+\cite{fsm}
+\subsection{Tipuri de memorie}
+\cite{cache}
+\cite{block_memory}
+\subsection{Sincronizarea circuitelor cu frecvențe diferite}
+\cite{sync}
 
 \end{document}

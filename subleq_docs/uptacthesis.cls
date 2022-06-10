@@ -59,7 +59,7 @@
 \definecolor{codepurple}{rgb}{0.58,0,0.82}
 \definecolor{backcolour}{rgb}{0.95,0.95,0.92}
 
-\lstdefinestyle{mystyle}{
+\lstdefinestyle{code_example}{
     backgroundcolor=\color{backcolour},   
     commentstyle=\color{codegreen},
     keywordstyle=\color{magenta},
@@ -78,7 +78,7 @@
     tabsize=2
 }
 
-\lstset{style=mystyle}
+\lstset{style=code_example}
 
 \pagestyle{plain}
 \setmainfont{Arial}
