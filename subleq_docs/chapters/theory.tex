@@ -133,7 +133,7 @@ Există mai multe tipuri de astfel de \emph{traducătoare} dar în mare putem vo
 tradus, o singură dată în timp ce \emph{two-pass assembler} citește fișierul sursă de 2 ori și de fiecare dată face
 ceva diferit. În continuare ne interesează doar a doua categorie. Un \emph{assembler} cu un singur pass are mai multe
 limitări care nu vor fi menționate aici dar le puteți găsi aici \cite{asl}. În figura \ref{fig:assembler} se poate 
-vedea schema generală a unui \emph{assembler}. Vom reveni la această imagine de multe ori în această secțiune.
+vedea schema generală a unui \emph{assembler}.
 
 \begin{figure}[h]
     \centering
@@ -158,7 +158,7 @@ pasul 2.
 \begin{figure}[h]
     \centering
     \includegraphics[width=0.8\textwidth]{first_pass.png}
-    \caption{Primul pas extrasă din \cite{asl}}
+    \caption{Primul pas extrasă din \cite{cache}}
     \label{fig:first_pass}
 \end{figure}
 
@@ -237,12 +237,95 @@ detaliate continuați cu \cite{lexer}.
 \end{figure}
 
 \section{Procesor}
-\subsection{Dispozitive cu stări finite}
-\cite{fsm}
-\subsection{Tipuri de memorie}
-\cite{cache}
-\cite{block_memory}
+\subsection{Automat cu stări finite}
+Procesorul este creierul unui calculator, cel care coordonează celelalte \emph{organe} și ia decizii. Presupun că sursa
+de alimentare e inima atunci. Procesoarele care există azi sunt extrem de complexe, fie că sunt \acrfull{cisc} sau
+\acrfull{risc} tot au sute de instructiuni diferite \cite{intel64}. Am obosit. Procesorul citește instrucțiuni din memorie,
+pe care le execută și enentual scrie înapoi în memorie. Deja avem un instrument foarte puternic dar nu e foarte util
+până nu introducem operații de intrare ieșire pentru a avea control asupra a ce se executa, cum și cănd.
+
+Un automan cu stări finite e o mașina abstractă care se afla în exact o stare din mulțimea stărilor în care se poate afla.
+Poate trece dintr-o stare în alta în mod neconditionat sau condiționat de anumite date de intrare. Trecerea dintr-o stare
+în alta se numește tranziție. Și atunci un automat cu stări finite este definit de mulțimea stărilor, stare inițială în care
+se află, tranzițiile și ce date de intrare declanșează tranzițiile. Multe dispozitive automate nu au nevoie de circuite
+complexe pentru a opera. O ușă care se deschide automat poate fi implementată ca un automat cu stări finite cu 4 stări
+\texttt{(CLOSED, OPENING, OPEN, CLOSING)}, iar ca date de intrare are un semnal de un bit, 1 dacă senzorul de greutate
+e apăsat, 0 dacă nu e.
+
+Procesoarele foarte simple pot fi implementate ca automate cu stări finite, precum în figura \ref{fig:fsm}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{fsm.png}
+    \caption{Procesor ca automat cu stări finite din \cite{fsm}}
+    \label{fig:fsm}
+\end{figure}
+
+\subsection{Memoria cache}
+Prin memorie definim un dispozitiv de stocare a informației. Memoriile pot fi de foarte multe tipuri și pe multe categorii.
+Avem memorii volatile și nevolatile, după durata de viață a informației. Volatil inseamnă că în momentul în care sursa
+ce alimentează dispozitivul e oprită informația se șterge, e nevoie de un efort/energie pentru a menține starea memoriei.
+Memoriile nevolatile consumă energie la citire și scriere și păstrează permanent informația, cel puțin în teorie, din păcate
+totul e afectat de entropie. O altă categorie e dimensiunea spațiului de stocare și viteza de răspuns. Le luăm Impreună
+deoarece viteza de răspuns e în general invers proporțională cu dimensiunea spațiului de stocare. De asemenea viteza de
+răspuns crește cu cât distanța fizică dintre memorie și alt dispozitiv ce accesează memoria este mai mică. În figura
+\ref{fig:memory_pyramid} se poate observa ierarhia acestei categorii.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{memory_pyramid.png}
+    \caption{Ierarhia tipurilor de memorie din \cite{cache}}
+    \label{fig:memory_pyramid}
+\end{figure}
+
+În figura \ref{fig:memory_pyramid} nu apare cea mai de jos categorie, care este \emph{Harder Drive} \cite{harderdrive}. 
+Am vorbit despre limbaje de programare ezoterice \cite{esolangs}, \emph{Harder Drive} \cite{harderdrive} e cam același 
+lucru dar pentru spații de stocare a informației. Cele 3 exemple de implementări date în \cite{harderdrive} sunt:
+\begin{itemize}
+    \item \acrshort{icmp} ECHO sau PING în varianta cu \emph{payload}
+    \item Jocul TETRIS în care fiecare bloc ocupat înseamnă 1, altfel 0
+    \item Teste COVID-19 electronice folosite puse pe o placă PCB
+\end{itemize}
+
+Dacă ne întoarcem atenția către memoria cache, observăm că există mai multe niveluri pe care e distribuită. Memoria cache
+de nivel 1 este cea mai aproape de procesor și în cazul unui procesor multi-core nu e împărțiță, fiecare core are căte un
+cache L1. Nuvelul 2 în acest caz este pentru perechi de core-uri, dar nu e neapărat să fie pentru fiecare 2, poate fi pentru
+fiecare 3 sau 4 sau mai multe core-uri, după caz. Nivelul 3 e cel mai mare, inclusiv la spațiu și la el au acces toate
+core-urile. Ierarhia aceasta există tocmai pentru a evita situația în care va trebui ca date sau instrucțiuni să fie încărcate
+din memoria RAM care e prea lentă ca să țină pasul cu procesorul, după cum e descris în \cite{bottleneck} unde sunt prezentate 
+și alte soluții la această problemă.
+
+Există mai multe tipuri de memorie cache. Se caracterizează prin comportamentul lor atunci când apare un cache miss la scriere
+sau la citire dar și după organizarea blocurilor de memorie. După organizarea blocurilor de memorie distingem cache cu
+mapare directă, total asciativă sau asociativă pe seturi. Maparea decide în ce linie din cache poate un bloc de la o anumită 
+adresă să fie stocat. Politica de înlocuire decide ce linie va fi înlocuită în cazul unui \emph{cache miss}, depinde de
+mapare, în cazul mapării directe un bloc de memorie poate fi pus într-o singură linie deci nu e nevoie de politică de
+înlocuire. Sunt 2 tipuri de strategii de scriere \emph{write through} informația e scrisă atât în cache cât și in memoria RAM
+și \emph{write back} informația e scrisă doar în cache, urmează să fie scrisă în memorie cănd linia e înlocuită. În cazul unui
+\emph{cache miss} la scriere blocul poate fi încărcat în cache \emph{write allocate} sau nu \emph{no-write allocate}
+\cite{cache}.
+
 \subsection{Sincronizarea circuitelor cu frecvențe diferite}
-\cite{sync}
+Dacă nu ești tu inginerul care se ocupă de realizarea tuturor componentelor unui sistem atunci cel mai probabil nu toate
+au aceeași frecvență de operare. Chiar dacă ești tot pot să existe motive pentru care asta se întâmplă, cum ar fi
+limitări fizice, reducerea costului sau reducrea consumului de energie, etc. Apare problema de comunicare sincronizată
+între 2 circuite. O soluție la această problemă este \emph{hanshacking}, folosită de altfel și la rețele în protocolul
+\acrshort{tcp}. Implementarea circuitului de sincronizare este redată în figura \ref{fig:handshake} și modul de funcționare.
+în figura \ref{fig:handshake_rules} Mai multe soluții găsiți aici \cite{sync}.
+Alte soluții precum \emph{clock domain crossing} sunt amintite și aici \cite{block_memory}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{handshake.png}
+    \caption{Sincronizare prin \emph{handshaking} din \cite{sync}}
+    \label{fig:handshake}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{sync_rules.png}
+    \caption{Sincronizare prin \emph{handshaking} din \cite{sync}}
+    \label{fig:handshake_rules}
+\end{figure}
 
 \end{document}
