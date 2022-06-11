@@ -123,13 +123,118 @@ cu numere întregi, care pot fi și adrese de memorie. Există o mulțime foarte
 
 \section{Assembler}
 \subsection{\emph{Two-Pass Assembler}}
-\cite{asl}
+Un \emph{assempler} este un program care traduce cod sursă, scris într-un limbaj de programare simbolic, în cod mașină,
+instrucțiune cu instrucțiune. Codul mașină poate fi după încărcat în memorie pentru a fi executat de către dispozitivul
+în cauză. Un \emph{assembler} poate și face mai mult de atât, ajută programatorul în mai multe aspecte ale scrierii
+programului.
+
+Există mai multe tipuri de astfel de \emph{traducătoare} dar în mare putem vorbi despre \emph{one-pass assembler} și
+\emph{two-pass assembler}. \emph{One-pass assembler} citește fișierul sursă, care conține codul ce se dorește a fi
+tradus, o singură dată în timp ce \emph{two-pass assembler} citește fișierul sursă de 2 ori și de fiecare dată face
+ceva diferit. În continuare ne interesează doar a doua categorie. Un \emph{assembler} cu un singur pass are mai multe
+limitări care nu vor fi menționate aici dar le puteți găsi aici \cite{asl}. În figura \ref{fig:assembler} se poate 
+vedea schema generală a unui \emph{assembler}. Vom reveni la această imagine de multe ori în această secțiune.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{assembler.png}
+    \caption{Componentele principale ale unui \emph{assembler} extrasă din \cite{asl}}
+    \label{fig:assembler}
+\end{figure}
+
+În primul pas citește fișierul sursă și caută toate \emph{etichetele}. O etichetă este doar un nume format din caractere
+atribuit unei locații de memorie. Sunt foarte folositoare deoarece oamenii lucrează mai greu cu numere. O etichetă poate
+fi folosită pentru a da un nume unei variabile, constante, locație în cod unde se află o instrucțiune, funcții, MACRO
+și în funcție de limbaj pot fi și altele. În primul pas nicio instrucțiune nu este tradusă și toate etichetele sunt
+salvate într-un tabel pentru a fi folosite în pasul următor. Pentru a putea atribui unei etichete valoarea corectă,
+adică adresa corectă pe care o reprezintă, \emph{assembler}-ul trebuie totuși să interpreteze fiecare instrucțiune.
+Acest lucru e necesar pentru că diferite instrucțiuni ocupă mai mulți \emph{bytes} în memorie în funcție de numărul
+parametrilor dar și dimensiunea acestora.De asemenea unele directive se traduc în instrucțiuni sau date care sunt scrise
+în memorie. În figura \ref{fig:first_pass} se vede ce se întămplă în pasul 1.
+De cele mai multe ori, dar nu e o regulă generală, la acest pas se construiește un fișier intermediar ce
+contine codul din fișierul sursă împreună cu informațiile culese și prelucrate în acest pas pentru a fi transmise la
+pasul 2.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{first_pass.png}
+    \caption{Primul pas extrasă din \cite{asl}}
+    \label{fig:first_pass}
+\end{figure}
+
+Pot să apară 3 probleme cu etichetele la pasul 1. Etichetele pot fi definite în mai multe locuri, numele unei etichete
+nu respectă regulile limbajului și etichete nedefinite dar utilizate. Dacă o etichetă este definită în mai multe locuri
+atunci cum se decide care este valoare ei? O etichetă ar trebui să fie un nume unic atribuit unei adrese pentru a putea
+fi ușor de folosit în cod. Multe limbaje nu permit simboluri speciale în numele etichetelor, de obicei sunt permise
+caracterele alfanumerice și bară orizontală `\_' dar primul caracter nu poate fi o cifră. O etichetă este nedefintă dacă
+este folosită în cod fără a fi definită, deci nu are o valoare atribuită.
+
+Pasul al 2-lea se ocupă cu traducerea instrucțiunilor în cod mașină. La fel ca la pasul anterior citește fișierul
+sursă sau fișierul intermediar și interpretează fiecare instrucțiune apoi o scrie în fișierul final. Când întâlnește
+o etichetă o înlocuiește cu valoarea ei. În figura \ref{fig:second_pass} se vede ce se întămplă în pasul 2.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{second_pass.png}
+    \caption{Al doilea pas extrasă din \cite{asl}}
+    \label{fig:second_pass}
+\end{figure}
+
+\clearpage
 \subsection{Directive}
-\cite{asl}
+Aici începe frumusețea unui \emph{assembler} dar nu aici se și termină. Pe lângă instrucțiuni un \emph{assembler} oferă
+și directive, acestea sunt comenzi suplimentare care sunt executate sau interpretate de către \emph{assembler} dar nu 
+sunt traduse. Unele directive ar putea fi interpretate în instrucțiuni și apoi traduse dar directiva în sine nu e
+specifică limbajului. Pot fi împărțite pe categorii funcționale. Capitolul 3 din \cite{asl} este dedicat directivelor.
+
 \subsection{MACRO}
-\cite{asl}
+În sine macro-urile sunt de asemenea directive dar pentru că sunt foarte folosite sunt considerate ca fiind ceva diferit
+și de sine stătător. Un macro e similar cu o subrutină dar există o diferență majoră între cele 2. O subrutină este o
+bucată de cod care e scrisă o singură dată și apoi poate fi folosită oriunde în cod prin simpla apelare. Un macro este
+tot o bucată de cod care e definit o singură dată și poate fi folosit de mai multe ori în cod dar de fiecare dată codul
+este copiat pur și simplu. Prin urmare subrutinele sunt tratate de către \emph{hardware} la execuție, iar macro sunt
+tratate de \emph{assembler} la compilare/asamblare/traducere. Pasul 0 este un pass special care e responsabil de interpreta
+toate macro-urile și de a le expanda unde sunt folosite. Capitolul 4 din \cite{asl} este dedicat macro-urilor.
+
 \subsection{Analiză lexicală}
-\cite{lexer}
+În implementarea unui \emph{assembler} analiza lexicală este primul și cel mai important proces. Un \emph{assembler}
+lucrează cu fișiere text, fișierul sursă și cele intermidiare. Un calculator lucrează cu codul mașină, el cunoaște doar
+0 și 1 dar pentru oameni nu e deloc intuitiv, din cauza asta trebuie să lucrăm cu fișiere text care sunt usor de citit
+și de scris pentru noi. Analiza lexicală este primul proces care are loc în care codul sursă este transformat într-un 
+șir de simboluri. Aceste simboluri sunt definite în funcție de nevoile limbajului, astfel încât să acopere toate
+elementele din cod. Exemplul următor explică aplicarea analizei lexicale asupra unei linii de cod dintr-un limbaj
+de programare arbitrar de nivel înalt:
+
+{\ttfamily
+    \begin{verbatim}
+int x = (a + b) * 2;
+
+KEYWORD int
+IDENTIFIER x
+EQUALS
+OPEN_PARANTHESIS
+IDENTIFIER a
+PLUS
+IDENTIFIER b
+CLOSE_PARANTHESIS
+TIMES
+LITERAL 2
+SEMICOLON
+    \end{verbatim}
+}
+
+Mai departe se trece la validarea sintaxei, o altă parte a analizei lexicale. Considerând exemplul anterior, trebuie să
+validăm ca o paranteză deshisă este și închisă, dupa `=' trebuie să urmeze o expresie validă, ultimul simbol trebuie să
+fie \texttt{SEMICOLON}, după `int' trebuie să urmeze un identificator, etc. În final simbolurile trebuie stocate și trimise
+către următorul proces împreună cu erorile găsite, după cum se vede în figura \ref{fig:lexer}. Pentru explicații mai
+detaliate continuați cu \cite{lexer}.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.8\textwidth]{lexer.png}
+    \caption{Al doilea pas extrasă din \cite{lexer}}
+    \label{fig:lexer}
+\end{figure}
 
 \section{Procesor}
 \subsection{Dispozitive cu stări finite}
