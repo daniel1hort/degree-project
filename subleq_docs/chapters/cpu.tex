@@ -12,7 +12,10 @@ pentru noi dispozitive hardware dar în același timp versiuni ieftine de plăci
 proiectarea circuitelor electronice dedicate în anumite produse.
 
 Proiectul coține următoarele circuite ce vor fi explicate în detaliu și care pot fi observate în figura 
-\ref{fig:main_block_diagram}:
+\ref{fig:main_block_diagram}. Pentru simplitate fiecare core al procesorului lucrează cu zone diferite
+de memorie pentru a elimina necesitatea de a implementa coerența memoriei cache, deoarece un core nu va
+modifica date care sunt accesibile de către celălalt core. Acest lucru a fost ușor de realizat, pentru
+procesor a fost adăugat un parametru generic ce reprezintă valoarea inițială a lui \acrshort{lc}, \acrlong{lc}.
 \begin{itemize}
     \item Procesor cu arhitectură \acrshort{subleq}
     \item Memorie cache cu mapare directă, \emph{write-back} cu \emph{write-allocate}
@@ -43,11 +46,11 @@ Majoritatea stărilor și desigur, majoritatea instrucțiunilor din \emph{pipeli
 Executarea unei singure instrucțiuni \acrshort{subleq} presupune 5 operații \emph{fetch}, o operație \acrshort{alu},
 o operație de scriere și încă una de decizie. Ca optimizare se verifică dacă noua valoare ce urmează să fie scrisă
 este diferită de cea care există deja la acea adresă, caz în care se sare peste operația de scriere, fiind
-redundantă.
+redundantă. Optimizarea nu apare în figura \ref{fig:cpu_state}.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[width=0.9\textwidth]{cpu_state.png}
+    \includegraphics[width=0.8\textwidth]{cpu_state.png}
     \caption{Diagrama de stare a procesorului}
     \label{fig:cpu_state}
 \end{figure}
@@ -56,10 +59,137 @@ Semnalele procesorului sunt, după cum se văd în figura \ref{fig:main_block_di
 \begin{itemize}
     \item i\_CLK -- semnal de intrare -- semnalul de \emph{clock}
     \item i\_RST -- semnal de intrare -- semnal de reset, are același efect cu stare INIT din figura \ref{fig:cpu_state}
-    \item i\_MISS -- semnal de intrare -- `1' în cazul unui \emph{cache miss} și `0' pentru un \emph{cache hit}
+    \item i\_MISS -- semnal de intrare -- semnal de la cache, `1' în cazul unui \emph{cache miss} și `0' pentru un \emph{cache hit}
     \item o\_WE -- semnal de ieșire -- `1' pentru operația de scriere, `0' pentru citire
-    \item o\_ADR -- semnal de ieșire -- adresa de la care se citește sau în care se scrie
-    \item io\_DATA -- semnal de intrare ieșire -- contine datele ce vor fi scrise sau citite de la adresa specificată
+    \item o\_ADR -- semnal de ieșire -- adresa de la care se citește sau în care se scrie în cache
+    \item io\_DATA -- semnal de intrare ieșire -- contine datele ce vor fi scrise în cache sau citite din cache de la 
+    adresa specificată
 \end{itemize}
+
+\noindent\begin{minipage}{\linewidth}
+Codul pseudocod pentru procesor:
+\begin{lstlisting}
+    LC = 0
+    WHILE( TRUE )
+        A = MEM[LC]
+        B = MEM[LC + 1]
+        C = MEM[LC + 2]
+        NEW_B = MEM[B] - MEM[A]
+        IF( NEW_B != MEM[B] )
+            MEM[B] = NEW_B
+        IF( NEW_B <= 0 )
+            LC = C
+        ELSE
+            LC = LC + 3;
+\end{lstlisting}
+\end{minipage}
+
+\subsection{Implementarea memoriei cache}
+Memoria cache e cea mai importantă componentă din întregul proiect, dat fiind numărul de operații \emph{fetch} necesare
+doar pentru o singură instrucțiune, plus cea de scriere. Pentru simplitate este folosită maparea directă. În acest caz
+avem un număr arbitrar de linii și o linie are un număr arbitrar de blocuri de dimensiunea unui \emph{cuvânt}.
+Datele dintr-o anumita adresă din memoria de nivel superior, în cazul nostru memoria RAM, pot fi stocate într-o singură
+linie din cache după formula $$LINE = ADR \;\mathrm{mod}\; LINE\_COUNT$$. Din cauza asta performanța este destul de mică și numărul
+de \emph{cache miss}-uri este mai mare decât în cazul celorlate 2 tipuri de mapări.
+
+Din cauză că fiecare instrucțiune poate presupune o operație de scriere în memorie, strategia de scriere aleasă a fost
+\emph{write-back} cu \emph{write-allocate}. Scrierea se face doar în cache, iar o linie din cache este scrisă în RAM
+doar când e înlocuită ca urmare a unui \emph{cache miss}. Liniile conțin o informație suplimentară, un bit \emph{Dirty Flag}
+care specifică dacă o linie trebuie sau nu să fie scrisă în memoria RAM. \emph{Dirty Flag} e setat pe 1 când are loc o
+operație de scriere în cache, în felul ăsta nu se face scrierea liniei dacă nu e necesar. Figura \ref{fig:cache_state}
+conține diagrama de stare a memoriei cache.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.7\textwidth]{cache_state.png}
+    \caption{Diagrama de stare a memoriei cache}
+    \label{fig:cache_state}
+\end{figure}
+
+Distingem 4 situații din figura \ref{fig:cache_state}:
+\begin{itemize}
+    \item Linia din care vrem să citim sau sa scriem are tagul invalid, ceea ce înseamnă că încă nu a fost încarcată din memoria RAM
+    nicio informație utilă, linia respectivă e goală sau contine informație inutilă. Se citește linia din memoria RAM și
+    se răspunde cu \emph{cache miss}.
+    \item Tagul extras din adresa de la care vrem să citim sau să scriem e diferit de tagul liniei și are \emph{Dirty Flag} setat pe 0,
+    nu s-a scris în acea linie. Linia se înlocuiește și se răspunde cu \emph{cache miss}.
+    \item Tagul extras din adresa de la care vrem să citim sau să scriem e diferit de tagul liniei și are \emph{Dirty Flag} setat pe 1,
+    s-a scris în acea linie. Prima dată linia se este scrisă în memoria RAM și apoi se înlocuiește. Se răspunde cu \emph{cache miss}.
+    \item La citire sau scriere dacă tagul liniei e valid și tagul extras din adresă e același cu tagul liniei, se execută
+    operația cerută și se răspunde cu \emph{cache hit}. 
+\end{itemize}
+
+Semnalele memoriei cache sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{itemize}
+    \item i\_CLK -- semnal de intrare -- semnalul de \emph{clock}
+    \item i\_ADR -- semnal de intrare -- adresa cerută de procesor pentru a citi din cache sau scrie în cache.
+    \item i\_DATA\_MEM -- semnal de intrare -- datele returnate de memoria RAM pentru adresa cerută
+    \item i\_WE -- semnal de intrare -- semnal de la procesor, `1' pentru scriere, `0' pentru citire
+    \item i\_ACK -- semnal de intrare -- semnal de \emph{acknewledge} de la memoria RAM pentru sincronizare 
+    \item i\_RST -- semnal de intrare -- semnal de reset, are același efect cu stare INIT din figura \ref{fig:cache_state}
+    \item i\_GRT -- semnal de intrare -- semnal de la arbitru, `1' înseamnă acces la \emph{bus} pentru a comunica cu memoria RAM
+    \item o\_ADR -- semnal de ieșire -- adresa de la care se citește sau în care se scrie în RAM
+    \item o\_DATA\_MEM -- semnal de ieșire -- semnal către RAM cu datele ce se vor scrie la adresa specificată
+    \item o\_WE -- semnal de ieșire -- semnal către RAM, `1' pentru scriere, `0' pentru citire
+    \item o\_MISS -- semnal de ieșire -- semnal către procesor, `1' în cazul unui \emph{cache miss}, `0' pentru \emph{cache hit}
+    \item o\_REQ -- semnal de ieșire -- semnal de \emph{request} pentru scriere sincronă în RAM
+    \item o\_AR\_REQ -- semnal de ieșire -- semnal către arbitru pentru a cere acces la \emph{bus}
+    \item io\_DATA -- semnal de intrare ieșire -- pentru procesor, contine datele ce vor fi scrise în cache sau citite din 
+    cache de la adresa specificată
+\end{itemize}
+
+\subsection{Implementarea celorlaltor circuite}
+\subsubsection{Memoria RAM}
+Memoria RAM servește drept spațiu de stocare principal. Datele sunt încarcate dintr-un fișier binar la începerea
+simulării. Dimensiunea e specificată printr-un parametru generic. Are un singr port, ceea ce înseamna că doar o
+singura operatie, de citire sau scriere, poate fi executată la un moment dat. Citirea e asincronă și de dragul
+simplității presupunem că are loc destul de repede pentru a fi citită într-un singur ciclu de tact. Scrierea
+e sincronă, se execută doar la semnal de \emph{clock} pe front crescător.
+
+Semnalele memoriei RAM sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{itemize}
+    \item i\_DATA -- semnal de intrare -- conține datele ce se vor scrie la adresa specificată
+    \item i\_ADR -- semnal de intrare -- adresa din care se citește sau în care se scrie
+    \item i\_WE -- semnal de intrare -- `1' pentru scriere, `0' pentru citire
+    \item i\_WCLK -- semnal de intrare -- semnal de \emph{clock} pentru scrierea sincronă
+    \item i\_REQ -- semnal de intrare -- semnal de \emph{request} pentru scriere
+    \item o\_DATA -- semnal de ieșire -- returnează datele care se află la adresa cerută
+    \item o\_ACK -- semnal de ieșire -- semnal de \emph{acknowledge} trimis după ce s-a executat scrierea, folosit pentru sincronizare
+\end{itemize}
+
+\subsubsection{Circuit de arbitrare}
+Un singur core poate avea acces la \emph{bus} la un moment dat. Circuitul de arbitrare se asigură de asta. Funcționează pe
+bază de prioritate, înseamnă ca primul core va avea tot timpul acces la \emph{bus} în timp ce al doilea are acces doar dacă
+primul core nu trimite cerere. Este implementat pentru a fi scalabil. Un parametru generic desemnează câte intrări și ieșiri
+are circuitul. În \ref{fig:main_block_diagram} are 2 intrări și ieșiri pentru cele 2 core-uri.
+
+Semnalele arbitrului sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{itemize}
+    \item i\_REQ -- semnal de intrare -- semnale de la alte circuite pentru a cere acces la \emph{bus}
+    \item o\_GRT -- semnal de ieșire -- oferă acces la \emph{bus} unui singur circuit
+\end{itemize}
+
+\subsubsection{Circuit de sincronizare}
+Este folosit pentru a asigura că în timpul unei operații de scriere, semnalele implicate nu îsi schimbă valoarea până cănd
+se primește un semnal de la memoria RAM cum că scrierea a fost finalizată. Cu alte cuvinte circuitul asigură sincronizarea
+comunicării între 2 circuite care operează la diferite frecvențe.
+
+\begin{itemize}
+    \item i\_D1 -- semnal de intrare -- semnal de \emph{request}
+    \item i\_D2 -- semnal de intrare -- semnal de \emph{acknowledge}
+    \item i\_CLK1 -- semnal de intrare -- semnal de \emph{clock} a circuitului care face \emph{request}
+    \item i\_CLK2 -- semnal de intrare -- semnal de \emph{clock} a circuitului care face \emph{acknowledge}
+    \item o\_Q1 -- semnal de ieșire -- semnal de \emph{request} întârziat în funcție de CLK2
+    \item o\_Q2 -- semnal de ieșire -- semnal de \emph{acknowledge} întârziat în funcție de CLK1
+\end{itemize}
+
+\subsection{Rezultatul simulării}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\textwidth]{simple_signals.png}
+    \caption{Diagrama de timp pe exemplu simplu}
+    \label{fig:simple_signals}
+\end{figure}
 
 \end{document}
