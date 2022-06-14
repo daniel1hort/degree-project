@@ -55,7 +55,25 @@ redundantă. Optimizarea nu apare în figura \ref{fig:cpu_state}.
     \label{fig:cpu_state}
 \end{figure}
 
-Semnalele procesorului sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{lstlisting}[language=VHDL, caption={Entitatea procesorului}, label={lst:cpu}]
+    entity SUBLEQ_CPU is
+        generic(
+            g_ADR_LINES  : integer := 64;
+            -- bigger or equal to g_ADR_LINES due to SUBLEQ requirements
+            g_DATA_LINES : integer := 64;
+            g_LC_START   : integer := 0
+        );
+        port(
+            i_CLK:   in    std_logic;
+            i_RST:   in    std_logic;
+            i_MISS:  in    std_logic;
+            o_WE:    out   std_logic; -- WRITE ENABLE
+            o_ADR:   out   std_logic_vector(g_ADR_LINES-1  downto 0);
+            io_DATA: inout std_logic_vector(g_DATA_LINES-1 downto 0) 
+        );
+    end entity;
+\end{lstlisting}
+
 \begin{itemize}
     \item i\_CLK -- semnal de intrare -- semnalul de \emph{clock}
     \item i\_RST -- semnal de intrare -- semnal de reset, are același efect cu stare INIT din figura \ref{fig:cpu_state}
@@ -119,7 +137,33 @@ Distingem 4 situații din figura \ref{fig:cache_state}:
     operația cerută și se răspunde cu \emph{cache hit}. 
 \end{itemize}
 
-Semnalele memoriei cache sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{lstlisting}[language=VHDL, caption={Entitatea memoriei cache}, label={lst:cache}]
+    entity CACHE is
+        generic(
+            g_ADR_LINES  : integer := 64;
+            g_DATA_LINES : integer := 64;
+            g_LINE_SIZE  : integer := 8;
+            g_MEM_LINES  : integer := 32
+        );
+        port(
+            i_CLK:      in    std_logic;
+            i_ADR:      in    std_logic_vector(g_ADR_LINES-1  downto 0);
+            i_DATA_MEM: in    std_logic_vector(g_DATA_LINES-1	downto 0);
+            i_WE:       in    std_logic;
+            i_ACK:      in    std_logic;
+            i_RST:      in    std_logic;
+            i_GRT:      in    std_logic;
+            o_ADR:      out   std_logic_vector(g_ADR_LINES-1  downto 0); 
+            o_DATA_MEM: out   std_logic_vector(g_DATA_LINES-1 downto 0);
+            o_WE:       out   std_logic;
+            o_MISS:     out   std_logic;
+            o_REQ:      out	  std_logic;
+            o_AR_REQ:   out   std_logic;
+            io_DATA:    inout std_logic_vector(g_DATA_LINES-1 downto 0)
+        );
+    end entity;
+    \end{lstlisting}
+
 \begin{itemize}
     \item i\_CLK -- semnal de intrare -- semnalul de \emph{clock}
     \item i\_ADR -- semnal de intrare -- adresa cerută de procesor pentru a citi din cache sau scrie în cache.
@@ -146,7 +190,25 @@ singura operatie, de citire sau scriere, poate fi executată la un moment dat. C
 simplității presupunem că are loc destul de repede pentru a fi citită într-un singur ciclu de tact. Scrierea
 e sincronă, se execută doar la semnal de \emph{clock} pe front crescător.
 
-Semnalele memoriei RAM sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{lstlisting}[language=VHDL, caption={Entitatea memoriei RAM}, label={lst:ram}]
+    entity RAM1DF is
+        generic(
+            g_ADR_LINES  : integer := 64;
+            g_DATA_LINES : integer := 64;
+            g_MEM_SIZE   : integer := 256
+        );
+        port(
+            i_DATA: in  std_logic_vector(g_DATA_LINES-1 downto 0);
+            i_ADR:  in  std_logic_vector(g_ADR_LINES-1  downto 0);
+            i_WE:   in  std_logic;
+            i_WCLK: in  std_logic;
+            i_REQ:  in  std_logic;
+            o_DATA: out std_logic_vector(g_DATA_LINES-1 downto 0);
+            o_ACK:  out std_logic := '0'
+        );
+    end entity;
+\end{lstlisting}
+
 \begin{itemize}
     \item i\_DATA -- semnal de intrare -- conține datele ce se vor scrie la adresa specificată
     \item i\_ADR -- semnal de intrare -- adresa din care se citește sau în care se scrie
@@ -163,7 +225,18 @@ bază de prioritate, înseamnă ca primul core va avea tot timpul acces la \emph
 primul core nu trimite cerere. Este implementat pentru a fi scalabil. Un parametru generic desemnează câte intrări și ieșiri
 are circuitul. În \ref{fig:main_block_diagram} are 2 intrări și ieșiri pentru cele 2 core-uri.
 
-Semnalele arbitrului sunt, după cum se văd în figura \ref{fig:main_block_diagram} și la anexa \ref{appendix:entities}:
+\begin{lstlisting}[language=VHDL, caption={Entitatea arbitrului}, label={lst:arbiter}]
+    entity ARBITER is
+        generic(
+            g_SIZE : integer := 2
+        );
+        port(
+            i_REQ: in  std_logic_vector(g_SIZE-1 downto 0);
+            o_GRT: out std_logic_vector(g_SIZE-1 downto 0)
+        );
+    end entity;
+\end{lstlisting}
+
 \begin{itemize}
     \item i\_REQ -- semnal de intrare -- semnale de la alte circuite pentru a cere acces la \emph{bus}
     \item o\_GRT -- semnal de ieșire -- oferă acces la \emph{bus} unui singur circuit
@@ -174,6 +247,19 @@ Este folosit pentru a asigura că în timpul unei operații de scriere, semnalel
 se primește un semnal de la memoria RAM cum că scrierea a fost finalizată. Cu alte cuvinte circuitul asigură sincronizarea
 comunicării între 2 circuite care operează la diferite frecvențe.
 
+\begin{lstlisting}[language=VHDL, caption={Entitatea circuitului de sincronizare}, label={lst:sync}]
+    entity SYNC2H is
+        port(
+            i_D1:   in  std_logic;
+            i_D2:   in  std_logic;
+            i_CLK1: in  std_logic;
+            i_CLK2: in  std_logic;
+            o_Q1:   out std_logic;
+            o_Q2:   out std_logic
+        );
+    end entity;
+\end{lstlisting}
+
 \begin{itemize}
     \item i\_D1 -- semnal de intrare -- semnal de \emph{request}
     \item i\_D2 -- semnal de intrare -- semnal de \emph{acknowledge}
@@ -183,7 +269,32 @@ comunicării între 2 circuite care operează la diferite frecvențe.
     \item o\_Q2 -- semnal de ieșire -- semnal de \emph{acknowledge} întârziat în funcție de CLK1
 \end{itemize}
 
+\subsubsection{Bistabil tip D}
+Circuitul de sincronizare folosește căte 2 bistabile tip D pentru fiecare semnal pentru a le întărzia cu câte 2
+cicluri de tact.
+
+\begin{lstlisting}[language=VHDL, caption={Entitatea bistabilului tip D}, label={lst:flipflopd}]
+    entity D_FF is
+        port(
+            i_D:   in  std_logic;
+            i_CLK: in  std_logic;
+            o_Q:   out std_logic := '0'
+        );
+    end entity;
+\end{lstlisting}
+
+\begin{itemize}
+    \item i\_D -- semnal de intrare -- conține datele ce vor fi salvate la următorul front crescător al semnalului de \emph{clock}
+    \item i\_CLK -- semnal de intrare -- semnal de \emph{clock}
+    \item o\_Q -- semnal de ieșire -- returnează datele curent salvate
+\end{itemize}
+
 \subsection{Rezultatul simulării}
+Circuitul din figura \ref{fig:main_block_diagram} a fost simulat în mediul de dezvoltare \emph{Active-HDL Student Edition}
+În figura \ref{fig:simple_signals} este prezentă diagrama de timp cu semnalele, în care s-a considerat un exemplu mai simplu
+cu un singur core pentru a fi mai ușor de urmărit și de explicat. Printre alte considerente, dimensiunea unui cuvânt este
+8 biti sau 1 octet, iar memoria cache are o singură linie cu 8 blocuri pentru a fi siguri că va avea loc o scriere în memoria
+RAM. Explicația pe segmente:
 
 \begin{figure}[h]
     \centering
@@ -191,5 +302,24 @@ comunicării între 2 circuite care operează la diferite frecvențe.
     \caption{Diagrama de timp pe exemplu simplu}
     \label{fig:simple_signals}
 \end{figure}
+
+\begin{itemize}
+    \item Segmentul 0: Conține doar partea de inițializare a circuitelor, fiecare având nevoie de un ciclu de tact.
+    \item Segmentul 1: Procesorul face prima operație de citire la adresa 0x00, la acest moment singura linie din cache e
+    neinițializată, adică are tagul invalid. Memoria cache trece în starea READ\_LINE și execută 8 citiri din memoria RAM,
+    deoarece linia are 8 blocuri de memorie de dimendiunea unui cuvânt. În tot acest timp se trimite un semnal de
+    \emph{cache miss} către procesor, iar el știe să aștepte până la un semnal \emph{cache hit} așa cum apare și în figura
+    \ref{fig:cpu_state}.
+    \item Segmentul 2: Aici are loc ultima operație \emph{fetch}, urmată de operație de scădere
+    \item Segmentul 3: Se execută operația de scriere prin setarea semnalului WE\_CPU pe `1'. Se scrie în aceeași
+    locație de unde s-a facut ultima citire, motiv pentru care adresa rămâne aceeași.
+    \item Segmentul 4: Procesorul cere datele de la adresa 0x03. Deoarece există doar o linie de cache cu 8 blocuri, asta
+    înseamnă că adresa 0x03 se află în linia ce conține adresele 0x00 - 0x07. Linia curentă e 0x08 - 0xFF, stim asta pentru
+    că ultima operație s-a executat pe adresa 0x0A. Se trimite un semnal \emph{cache miss} și pentru că s-a scris în
+    linie trebuie să fie scrisă în RAM înainte de a fi înlocuită. Se observă 3 operații complete de scriere și una incompletă
+    împreună cu semnalele de sincronizare aferente. În total o singură scriere durează 10 cicluri de tact. În cazul primelor
+    2 scrieri, informația scrisă este aceiași cu cea care exista deja la adresele respective. La a 3-a scriere în RAM este
+    valoarea 0x02 și valoarea scrisă este 0xFE (-2 în complement de 2).
+\end{itemize}
 
 \end{document}
