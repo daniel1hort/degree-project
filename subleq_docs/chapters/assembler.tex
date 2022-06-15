@@ -2,5 +2,130 @@
 \graphicspath{{\subfix{../assets/}}}
 
 \begin{document}
+
+\subsection{Considerente generale}
+Proiectul a fost dezvoltat în C, mai exact standard ISO C14.
+Despre .ZERO
+maxim 256 caractere pe linie
+cei 2 pasi
+
+\subsection{Aspecte importante din cod}
+fara memorie alocata dinamic
+simboluri speciale
+macro nerecursiv
+label in macro
+
+\subsection{Sintaxă limbaj}
+\subsubsection{Instrucțiune}
+Singura instrucțiune este \emph{subleq}, din acest motiv este implicită și se scriu doar parametrii. O instrucțiune
+poate fi scrisă cu 3 parametrii, 2 paametrii sau 1 parametru. În cazul cu 3 parametrii se execută instrucțiunea subleq
+obișnuită \texttt{subleq A B C}. În cazul cu 2 parametrii, al 3-lea parametru se pune automat `?', \texttt{subleq A B ?}.
+nstrucțiunea următoare. În cazul cu un singur parametru se întelegeÎn felul acesta tot timpul se trece la i
+\texttt{subleq A A ?} care e echivalent cu \texttt{A = A - A} sau \texttt{A = 0}. S-a luat în considerare ca
+forma cu un parametru să se traducă drept \texttt{ZERO ZERO A}, adică salt necondiționat dar are mai puțină
+utilitate decât setarea pe 0. Incrementează \acrshort{lc} cu 3.
+
+\subsubsection{Directive}
+Pe baza \cite{asl} a fost luată decizia ca directivele să înceapă cu caracterul `.'. Directivele prezente în limbaj sunt:
+\begin{itemize}
+    \item \verb|.ORG <number>|\\
+    Are un singur parametru numeric. Setează valoarea lui \acrshort{lc}.
+    \item \verb|.DATA <number>/<A>|\\
+    Are un singur parametru care poate fi un număr sau o etichetă. Stochează în memorie valoarea precizată și 
+    Incrementează \acrshort{lc} cu 1.
+    \item \verb|.END|\\
+    Nu are parametrii. Crează un ciclu infinit. Se traduce într-o instrucțiune, \texttt{ZERO ZERO *}.
+    \item \verb|<label> .MACRO <p1> <p2> <p3> <p4> <p5>|\\
+    Trebuie să aibă o etichetă ce va acționa drept nume al macro-ului. Poate avea între 0-5 argumente, toate sunt adrese
+    Nu incrementează \acrshort{lc} și nici liniile următoare nu îl incrementează. După această directivă pot să
+    urmeze oricâte linii care conțin instrucțiuni, alte directive sau macro-uri. Aceste linii formează corpul
+    macro-ului.
+    \item \verb|.ENDM|\\
+    Nu are parametrii. Marchează finalul definiției unui macro. Nu incrementează \acrshort{lc} dar liniile ce urmează
+    îl incrementează
+\end{itemize}
+
+\subsubsection{MACRO}
+
+\subsubsection{Comentarii}
+Suportă doar simboluri de o linie. Caracterul `;' e desemnat pentru a marca începutul unui comentariu. Totodată,
+din cauză că o linie are doar 256 de caractere, tot ce se află dupa acele 256 de caractere e ignorat. Textul care urmează
+după o instrucțiune cu 3 parametrii sau după ultimul argument al unei directive este de asemenea ignorat. Se recomandă
+ca toate comentariile să înceapă cu `;' și să nu se depășească niciodată 256 de caractere pe o linie, deși nu se
+generează o eroare.
+\begin{lstlisting}[caption={Exemplu de comentarii}, label={lst:comment}]
+    A ;this is a comment
+    A B                                 consider this to be after 256 characters
+    A B C this is also a comment
+    m1: .DATA -1 this is also a comment
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Exemplu de cod în subleq assembly}, label={lst:code}]
+    reset: .MACRO p
+        p
+    .ENDM
+    
+    sub: .MACRO a b
+        b a
+    .ENDM
+    
+    add: .MACRO a b
+        @SUB r1 b
+        @SUB a r1
+        @reset r1
+    .ENDM
+    
+    MULT: .MACRO a b
+        @SUB r1 b
+        @SUB r1 one
+        @SUB r2 a
+        @RESET a
+        loop: @SUB a r2
+        one r1 loop
+        @RESET r1
+        @RESET r2
+    .ENDM
+    
+    ;// FIRST CORE PROGRAM //
+    @SUB b a
+    @RESET a
+    .END
+    
+    a: .DATA 4
+    b: .DATA 2
+    
+    ;-------------------------------------------------------------------
+    
+    ;// SECOND CORE PROGRAM //
+    .ORG 128
+    @MULT x y
+    @MULT x y
+    .END
+    
+    x:  .DATA 3
+    y:  .DATA 2
+    r1: .DATA 0
+    r2: .DATA 0
+    ONE: .DATA -1
+    
+    ; at the end will be added symbol ZERO which is common for the cores
+    \end{lstlisting}
+
+\subsection{Raportarea erorilor}
+În limbaj sunt documentate 12 tipuri de erori care pot să apară Acestea sunt:
+\begin{itemize}
+    \item \verb|ERROR_INVALID_DATA_PARAM| -- parametru invalid pentru directiva \verb|.DATA|, acceptă doar numere și nume valide de etichete
+    \item \verb|ERROR_INVALID_SYMBOL_NAME| -- nume invalid de etichetă, trebuie să înceapă cu o literă și poate conține cifre, nu poate conține simboluri speciale, maxim 16 caractere
+    \item \verb|ERROR_UNKNOWN_DIRECTIVE| -- directivă necunoscută, nu se află în lista de directive
+    \item \verb|ERROR_MULTIPLY_DEFINED_LABEL| -- o etichetă nu are voie să fie definită de mai multe ori
+    \item \verb|ERROR_UNDEFINED_SYMBOL| -- o etichetă sau un macro e folosit fără a fi definit undeva în cod
+    \item \verb|ERROR_INTERNAL_SYMBOL_REDEFINED| -- \verb|ZERO| e singurul simbol de care se ocupă \emph{assembler}-ul, e o etichetă către o zonă de memorie ce mereu conține valoarea 0x00, nu poate fi redefinită
+    \item \verb|ERROR_SYMBOL_ZERO_READONLY| -- la adresa simbolului \verb|ZERO| este mereu valoarea 0, nu este permisă schimbarea valorii
+    \item \verb|ERROR_MACRO_INSIDE_MACRO| -- un macro nu poate fi definit în interiorul unui macro
+    \item \verb|ERROR_ENDM_OUTSIDE_MACRO| -- \verb|ENDM| trebuie să fie precedat de un \verb|.MACRO|
+    \item \verb|ERROR_MACRO_NAME_MISSING| -- o linie ce definește un macro trebuie să aibă o etichetă, aceasta devine numele macro-ului
+    \item \verb|ERROR_TOO_FEW_ARGUMENTS| -- la folosirea unui macro au fost furnizate prea putine argumente
+    \item \verb|ERROR_TOO_MANY_ARGUMENTS| -- la folosirea unui macro au fost furnizate prea multe argumente
+\end{itemize}
     
 \end{document}
