@@ -2,5 +2,30 @@
 \graphicspath{{\subfix{../assets/}}}
 
 \begin{document}
-    
+    \section{Utilizarea Procesorului}
+    Fișierele \acrshort{vhdl} trebuie încărcate într-un mediu de simulare după care se simulează
+    entitatea \texttt{CPU\_TB}. Dacă se aplică modificările necesare proiectul poate fi încărcat
+    pe o placă \acrshort{fpga}. \\
+
+    \section{Utilizarea \emph{assembler}-ului}
+    \begin{description}
+        \item[Nume] \hfill \\
+        subleqasm -- \emph{assembler} pentru arhitectura \acrshort{subleq}
+        \item[Rezumat] \hfill \\
+        subleqasm \emph{infile} [-o outfile] [-s size] [-w wordsize]
+        \item[Descriere] \hfill \\
+        Traduce un fișier de cod sursă într-un fișier binar executabil pe hardware dedicat cu 
+        arhitectură \acrshort{subleq}
+        \item[Opțiuni] \hfill
+        \begin{itemize}
+            \item -o, -{}-output <file> -- numele fișierului binar generat. Dacă nu e precizat atunci fișierul
+            se va numi `a.bin'.
+            \item -s, -{}-size <number> -- dimensiunea minimă în cuvinte a fișierului binar generat. Dacă
+            dimensiunea finală a fișierului e mai mică decăt dimensiunea minimă atunci se scrie valoarea
+            0x00 până se atinge valoarea minimă. Dacă nu e precizat atunci dimensiunea minimă e 0.
+            \item -w, -{}-word <1--8> -- dimensiunea în octeți a cuvântului. Dacă nu e precizat atunci
+            dimensiunea este 8 octeți (64 biți).
+        \end{itemize}
+    \end{description}
+
 \end{document}
