@@ -4,48 +4,143 @@
 \begin{document}
 
 \subsection{Considerente generale}
-Proiectul a fost dezvoltat în C, mai exact standard ISO C14.
-Despre .ZERO
-maxim 256 caractere pe linie
-cei 2 pasi
+Proiectul a fost dezvoltat în C, mai exact standard ISO C14. Alegerea nu a fost arbitrară, C este un limbaj de
+programare foarte puternic și capabil. O alternativă luată în considerare a fost C\# dar stilul de programare
+OOP lăsa de dorit și tentația de a complica lucrurile folosind funcționalități de limbaj există.
+Tipul de \emph{assempler} ales este \emph{two-pass assembler}. Acest tip este mai ușor de înteles și e mai extensibil decât un
+\emph{one-pass asembler}. Asta înseamnă ca execută 2 pași asupra fișierului cu codul sursă. Cei 2 pași au
+responsabilități diferite.
+
+Primul pas se ocupă de strângerea de informații necesare pentru pasul 2 și de
+transmiterea acestor informații. În mod normal se face printr-un fișier intermediar, în cazul nostru
+fișierul intermediar nu este unul standard. Acesta conține o versiune mai simplă a fișierului sursă
+în loc să conțină una mai complicată. Etichetele și macro-urile găsite în pasul 1 se păstrează în 
+memorie, de unde pasul 2 le accesează. Fișierul intermediar conține o versiune mai curața a fișierului
+sursă și macro-urile expandate. Din cauza aceasta opținea de listare a codului final într-un fișier
+nu este posibilă, la pasul 2 nu se știe cum arată fișierul sursă. Toate erorile sunt prinse la pasul 1.
+Pasul 2 traduce efectiv instrucțiunile în cod mașină, executabil de către procesor.
+
+Pentru a face lucrurile mai simple, o linie poate avea maxim 256 de caractere.
+Tot ce se află după este ignorat. Simbolul \texttt{ZERO} este singurul care este scris de \emph{assembler},
+este o etichetă către o zonă de memorie ce mereu va avea valoarea 0. Aceasta regulă este consolidată în cod
+și o încercare de a modifica valoarea va rezulta într-o eroare de compilare. Este posibil ca din cod să se
+facă referire la valoarea lui \acrshort{lc} folosind simbolul `*'. Pentru a face referire la adresa
+următoarei instrucțiune se folosește simbolul `?'. Atunci instrucțiunea \texttt{NOP}, o instrucțiune
+care nu face nimic, se scrie \texttt{subleq ZERO ZERO ?}.
 
 \subsection{Aspecte importante din cod}
-fara memorie alocata dinamic
-simboluri speciale
-macro nerecursiv
-label in macro
+Niciodată nu se alocă memorie în mod dinamic. Informațiile referitoare la etichete și macro-uri sunt salvate
+într-un vector alocat static. Referința la o etichetă sau macro se face prin indexul acestora în vector.
+\begin{lstlisting}[caption={Referință prin index în structura LINE\_DEF}, language={C}, label={lst:staticptr}]
+    typedef int16_t static_ptr;
+    ...
+    typedef struct line_def {
+	    static_ptr label;
+	    static_ptr macro;
+	    LINE_TYPE type;
+	    DIRECTIVE_TYPE directive;
+	    PARAM_DEF params[5];
+    } LINE_DEF;
+    ...
+    LABEL_DEF labels[INT16_MAX];
+    int labels_count;
+    MACRO_DEF macros[INT16_MAX];
+    int macros_count;
+\end{lstlisting}
+
+În interiorul unui macro ar trebui să fie posibil să definești etichete. Problema este că un macro este
+făcut pentru a fi folosit în mai multe locuri. Asta ar duce la definirea multiplă a unei etichete, situație
+care rezultă în eroare de compilare. Pentru a rezolva problema, etichetele au acum un domeniu de definiție,
+care poate fi global sau macro. O etichetă cu domeniu macro nu are valoare. Când macro-ul este expandat
+se crează o etichetă globală cu valoarea curentă a lui \acrshort{lc}, la numele căreia se adaugă un sufix
+format din 4 litere și cifre alese la întamplare. În felul acesta o etichetă poate fi definită într-un
+macro.
+\noindent\begin{minipage}{\linewidth}
+\begin{lstlisting}[caption={Tratarea unei etichete în interiorul unui macro}, language={C}, label={lst:padding}]
+    int macro_expand(int lc, MACRO_DEF macro, PARAM_DEF* params, FILE* stream) {
+        ...
+        for (int i = macro.first_line; i < macro.first_line + macro.line_count; i++) {
+            LINE_DEF line = lines[i];
+
+            if (line.label != -1) { // line contains a label
+			        label = labels[line.label];
+			        random_padding_after(label.name, 4, seed);
+			        label.value = lc;
+			        label.scope = LABEL_SCOPE_GLOBAL;
+			        label_add(label);
+		        }
+        ...
+        }
+    }
+\end{lstlisting}
+\end{minipage}
+
+Un macro poate fi folosit în interiorul definiției unui alt macro. Pentru a nu permite crearea unui
+ciclu infinit de expandare a fost luată decizia de a nu permite folosirea unui macro înainte de
+a fi definit. Pentru a permite folosirea unui macro înainte de a fi definit se poate testa că nu există
+cicluri prin parcurgerea grafului orientat al dependințelor dintre macro-uri. Dacă un nod al grafului 
+este vizitat de 2 ori atunci există un ciclu și trebuie semnalată o eroare.
 
 \subsection{Sintaxă limbaj}
 \subsubsection{Instrucțiune}
 Singura instrucțiune este \emph{subleq}, din acest motiv este implicită și se scriu doar parametrii. O instrucțiune
-poate fi scrisă cu 3 parametrii, 2 paametrii sau 1 parametru. În cazul cu 3 parametrii se execută instrucțiunea subleq
+poate fi scrisă cu 3 parametrii, 2 parametrii sau 1 parametru. În cazul cu 3 parametrii se execută instrucțiunea subleq
 obișnuită \texttt{subleq A B C}. În cazul cu 2 parametrii, al 3-lea parametru se pune automat `?', \texttt{subleq A B ?}.
-nstrucțiunea următoare. În cazul cu un singur parametru se întelegeÎn felul acesta tot timpul se trece la i
+În felul acesta tot timpul se trece la instrucțiunea următoare. În cazul cu un singur parametru se întelege
 \texttt{subleq A A ?} care e echivalent cu \texttt{A = A - A} sau \texttt{A = 0}. S-a luat în considerare ca
 forma cu un parametru să se traducă drept \texttt{ZERO ZERO A}, adică salt necondiționat dar are mai puțină
 utilitate decât setarea pe 0. Incrementează \acrshort{lc} cu 3.
 
+\subsubsection{Etichetă}
+Orice linie poate avea o etichetă. Trebuie să apară prima pe linie, se delimitează de restul liniei prin
+simbolul `:', de exemplu \texttt{init: a a ?}.
+
 \subsubsection{Directive}
-Pe baza \cite{asl} a fost luată decizia ca directivele să înceapă cu caracterul `.'. Directivele prezente în limbaj sunt:
+Pe baza lucrării \cite{asl} a fost luată decizia ca directivele să înceapă cu caracterul `.'. Directivele prezente în limbaj sunt:
 \begin{itemize}
     \item \verb|.ORG <number>|\\
-    Are un singur parametru numeric. Setează valoarea lui \acrshort{lc}.
+    Are un singur parametru numeric. Setează valoarea lui \acrshort{lc}. Este interpretată în pasul 2 prin
+    scrierea de valori 0x00 până se ajunge la noua valoare a lui \acrshort{lc}.
     \item \verb|.DATA <number>/<A>|\\
     Are un singur parametru care poate fi un număr sau o etichetă. Stochează în memorie valoarea precizată și 
-    Incrementează \acrshort{lc} cu 1.
+    incrementează \acrshort{lc} cu 1. Este interpretată în pasul 2 prin scrierea în memorie a valorii
+    numerice sau valorii etichetei.
     \item \verb|.END|\\
-    Nu are parametrii. Crează un ciclu infinit. Se traduce într-o instrucțiune, \texttt{ZERO ZERO *}.
+    Nu are parametrii. Crează un ciclu infinit. Este interpretată în pasul 1 prin expandarea în instrucțiunea 
+    \texttt{ZERO ZERO *}.
     \item \verb|<label> .MACRO <p1> <p2> <p3> <p4> <p5>|\\
-    Trebuie să aibă o etichetă ce va acționa drept nume al macro-ului. Poate avea între 0-5 argumente, toate sunt adrese
+    Trebuie să aibă o etichetă ce va acționa drept nume al macro-ului. Poate avea între 0-5 argumente, toate sunt etichete
     Nu incrementează \acrshort{lc} și nici liniile următoare nu îl incrementează. După această directivă pot să
     urmeze oricâte linii care conțin instrucțiuni, alte directive sau macro-uri. Aceste linii formează corpul
-    macro-ului.
+    macro-ului. Este interpretată în pasul 1 prin setarea \allowbreak \texttt{inside\_macro\_definition = true;}
     \item \verb|.ENDM|\\
     Nu are parametrii. Marchează finalul definiției unui macro. Nu incrementează \acrshort{lc} dar liniile ce urmează
-    îl incrementează
+    îl incrementează. Este interpretată în pasul 1 prin setarea \allowbreak \texttt{inside\_macro\_definition = false;}
 \end{itemize}
 
 \subsubsection{MACRO}
+Pentru a folosi un macro, numele lui trebuie precedat de simbolul `@'. Îl face mai vizibil pentru programator 
+și totodată mai ușor de identificat în cod. Un macro poate fi folosit inclusiv în interiorul definiției unui alt
+macro dar nu în propria lui definiție.
+\begin{lstlisting}[caption={Exemplu macro}, label={lst:macro}]
+    NOP: .MACRO
+        ZERO
+    .ENDM
+
+    ADD: .MACRO a b
+        b r1
+        r1 a
+        r1
+    .ENDM
+
+    @ADD x y
+    @NOP
+    @NOP
+
+    x:  .DATA 5
+    y:  .DATA 3
+    r1: .DATA 0
+\end{lstlisting}
 
 \subsubsection{Comentarii}
 Suportă doar simboluri de o linie. Caracterul `;' e desemnat pentru a marca începutul unui comentariu. Totodată,
@@ -53,12 +148,15 @@ din cauză că o linie are doar 256 de caractere, tot ce se află dupa acele 256
 după o instrucțiune cu 3 parametrii sau după ultimul argument al unei directive este de asemenea ignorat. Se recomandă
 ca toate comentariile să înceapă cu `;' și să nu se depășească niciodată 256 de caractere pe o linie, deși nu se
 generează o eroare.
+
+\noindent\begin{minipage}{\linewidth}
 \begin{lstlisting}[caption={Exemplu de comentarii}, label={lst:comment}]
     A ;this is a comment
     A B                                 consider this to be after 256 characters
     A B C this is also a comment
     m1: .DATA -1 this is also a comment
 \end{lstlisting}
+\end{minipage}
 
 \begin{lstlisting}[caption={Exemplu de cod în subleq assembly}, label={lst:code}]
     reset: .MACRO p
@@ -109,7 +207,39 @@ generează o eroare.
     ONE: .DATA -1
     
     ; at the end will be added symbol ZERO which is common for the cores
-    \end{lstlisting}
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Conținutul fișierului intermediar pentru exemplul dat}, label={lst:intermediate}]
+    a b ? 
+    a a ? 
+    ZERO ZERO *
+    .DATA 4
+    .DATA 2
+    .ORG 128
+    y r1 ? 
+    one r1 ? 
+    x r2 ? 
+    x x ? 
+    r2 x ? 
+    one r1 loopWJMS 
+    r1 r1 ? 
+    r2 r2 ? 
+    y r1 ? 
+    one r1 ? 
+    x r2 ? 
+    x x ? 
+    r2 x ? 
+    one r1 loop4VZY 
+    r1 r1 ? 
+    r2 r2 ? 
+    ZERO ZERO *
+    .DATA 3
+    .DATA 2
+    .DATA 0
+    .DATA 0
+    .DATA -1
+    .DATA 0
+\end{lstlisting}
 
 \subsection{Raportarea erorilor}
 În limbaj sunt documentate 12 tipuri de erori care pot să apară Acestea sunt:
