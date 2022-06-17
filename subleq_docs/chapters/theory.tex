@@ -32,7 +32,7 @@ despre celălalt, are la bază doar conceptul de \emph{loop} ce nu poate fi term
 durata de viață a unui număr sau concept pe care limbajul îl întelege. În teorie prin legarea unui \emph{loop} la univers,
 acesta s-ar termina odată cu moartea universului. Folosind comanda \emph{EXECUTE} limbajul poate fi folosit pentru a
 executa virtual orice, însă comanda poate fi folosită doar la finalul unui \emph{loop}, ceea ce poate presupune
-așteptarea unui perioade lungi de timp.
+așteptarea unei perioade lungi de timp.
 
 Această secțiune servește drept introducere în minunata lume ezoterică a programării. Pentru mai multe detalii
 vizitați \cite{esolangs}.
@@ -125,7 +125,7 @@ cu numere întregi, care pot fi și adrese de memorie. Există o mulțime foarte
 \subsection{\emph{Two-Pass Assembler}}
 Un \emph{assempler} este un program care traduce cod sursă, scris într-un limbaj de programare simbolic, în cod mașină,
 instrucțiune cu instrucțiune. Codul mașină poate fi după încărcat în memorie pentru a fi executat de către dispozitivul
-în cauză. Un \emph{assembler} poate și face mai mult de atât, ajută programatorul în mai multe aspecte ale scrierii
+în cauză. Un \emph{assembler} poate, și face mai mult de atât, ajută programatorul în mai multe aspecte ale scrierii
 programului.
 
 Există mai multe tipuri de astfel de \emph{traducătoare} dar în mare putem vorbi despre \emph{one-pass assembler} și
@@ -169,8 +169,8 @@ fi ușor de folosit în cod. Multe limbaje nu permit simboluri speciale în nume
 caracterele alfanumerice și bară orizontală `\_' dar primul caracter nu poate fi o cifră. O etichetă este nedefintă dacă
 este folosită în cod fără a fi definită, deci nu are o valoare atribuită.
 
-Pasul al 2-lea se ocupă cu traducerea instrucțiunilor în cod mașină. La fel ca la pasul anterior citește fișierul
-sursă sau fișierul intermediar și interpretează fiecare instrucțiune apoi o scrie în fișierul final. Când întâlnește
+Pasul al 2-lea se ocupă cu traducerea instrucțiunilor în cod mașină. La fel ca la pasul anterior citește
+fișierul intermediar și interpretează fiecare instrucțiune apoi o scrie în fișierul final. Când întâlnește
 o etichetă o înlocuiește cu valoarea ei. În figura \ref{fig:second_pass} se vede ce se întămplă în pasul 2.
 
 \begin{figure}[h]
@@ -193,12 +193,12 @@ specifică limbajului. Pot fi împărțite pe categorii funcționale. Capitolul 
 bucată de cod care e scrisă o singură dată și apoi poate fi folosită oriunde în cod prin simpla apelare. Un macro este
 tot o bucată de cod care e definit o singură dată și poate fi folosit de mai multe ori în cod dar de fiecare dată codul
 este copiat pur și simplu. Prin urmare subrutinele sunt tratate de către \emph{hardware} la execuție, iar macro sunt
-tratate de \emph{assembler} la compilare/asamblare/traducere. Pasul 0 este un pass special care e responsabil de interpreta
+tratate de \emph{assembler} la compilare/asamblare/traducere. Pasul 0 este un pass special care e responsabil de a interpreta
 toate macro-urile și de a le expanda unde sunt folosite. Capitolul 4 din \cite{asl} este dedicat macro-urilor.
 
 \subsection{Analiză lexicală}
 În implementarea unui \emph{assembler} analiza lexicală este primul și cel mai important proces. Un \emph{assembler}
-lucrează cu fișiere text, fișierul sursă și cele intermidiare. Un calculator lucrează cu codul mașină, el cunoaște doar
+lucrează cu fișiere text, fișierul sursă și cele intermediare. Un calculator lucrează cu codul mașină, el cunoaște doar
 0 și 1 dar pentru oameni nu e deloc intuitiv, din cauza asta trebuie să lucrăm cu fișiere text care sunt usor de citit
 și de scris pentru noi. Analiza lexicală este primul proces care are loc în care codul sursă este transformat într-un 
 șir de simboluri. Aceste simboluri sunt definite în funcție de nevoile limbajului, astfel încât să acopere toate
@@ -224,7 +224,7 @@ SEMICOLON
 }
 
 Mai departe se trece la validarea sintaxei, o altă parte a analizei lexicale. Considerând exemplul anterior, trebuie să
-validăm ca o paranteză deshisă este și închisă, dupa `=' trebuie să urmeze o expresie validă, ultimul simbol trebuie să
+validăm că o paranteză deshisă este și închisă, dupa `=' trebuie să urmeze o expresie validă, ultimul simbol trebuie să
 fie \texttt{SEMICOLON}, după `int' trebuie să urmeze un identificator, etc. În final simbolurile trebuie stocate și trimise
 către următorul proces împreună cu erorile găsite, după cum se vede în figura \ref{fig:lexer}. Pentru explicații mai
 detaliate continuați cu \cite{lexer}.
@@ -244,8 +244,8 @@ de alimentare e inima atunci. Procesoarele care există azi sunt extrem de compl
 pe care le execută și enentual scrie înapoi în memorie. Deja avem un instrument foarte puternic dar nu e foarte util
 până nu introducem operații de intrare ieșire pentru a avea control asupra a ce se executa, cum și cănd.
 
-Un automan cu stări finite e o mașina abstractă care se afla în exact o stare din mulțimea stărilor în care se poate afla.
-Poate trece dintr-o stare în alta în mod neconditionat sau condiționat de anumite date de intrare. Trecerea dintr-o stare
+Un automat cu stări finite e o mașina abstractă care se află în exact o stare din mulțimea stărilor în care se poate afla.
+Poate trece dintr-o stare în alta în mod necondționat sau condiționat de anumite date de intrare. Trecerea dintr-o stare
 în alta se numește tranziție. Și atunci un automat cu stări finite este definit de mulțimea stărilor, stare inițială în care
 se află, tranzițiile și ce date de intrare declanșează tranzițiile. Multe dispozitive automate nu au nevoie de circuite
 complexe pentru a opera. O ușă care se deschide automat poate fi implementată ca un automat cu stări finite cu 4 stări
@@ -284,12 +284,12 @@ lucru dar pentru spații de stocare a informației. Cele 3 exemple de implement�
 \begin{itemize}
     \item \acrshort{icmp} ECHO sau PING în varianta cu \emph{payload}
     \item Jocul TETRIS în care fiecare bloc ocupat înseamnă 1, altfel 0
-    \item Teste COVID-19 electronice folosite puse pe o placă PCB
+    \item Teste COVID-19 electronice folosite, puse pe o placă PCB
 \end{itemize}
 
 Dacă ne întoarcem atenția către memoria cache, observăm că există mai multe niveluri pe care e distribuită. Memoria cache
-de nivel 1 este cea mai aproape de procesor și în cazul unui procesor multi-core nu e împărțiță, fiecare core are căte un
-cache L1. Nuvelul 2 în acest caz este pentru perechi de core-uri, dar nu e neapărat să fie pentru fiecare 2, poate fi pentru
+de nivel 1 este cea mai aproape de procesor și în cazul unui procesor multi-core nu e împărțiță, fiecare core are câte un
+cache L1. Nivelul 2 în acest caz este pentru perechi de core-uri, dar nu e neapărat să fie pentru fiecare 2, poate fi pentru
 fiecare 3 sau 4 sau mai multe core-uri, după caz. Nivelul 3 e cel mai mare, inclusiv la spațiu și la el au acces toate
 core-urile. Ierarhia aceasta există tocmai pentru a evita situația în care va trebui ca date sau instrucțiuni să fie încărcate
 din memoria RAM care e prea lentă ca să țină pasul cu procesorul, după cum e descris în \cite{bottleneck} unde sunt prezentate 
@@ -300,18 +300,18 @@ sau la citire dar și după organizarea blocurilor de memorie. După organizarea
 mapare directă, total asciativă sau asociativă pe seturi. Maparea decide în ce linie din cache poate un bloc de la o anumită 
 adresă să fie stocat. Politica de înlocuire decide ce linie va fi înlocuită în cazul unui \emph{cache miss}, depinde de
 mapare, în cazul mapării directe un bloc de memorie poate fi pus într-o singură linie deci nu e nevoie de politică de
-înlocuire. Sunt 2 tipuri de strategii de scriere \emph{write through} informația e scrisă atât în cache cât și in memoria RAM
-și \emph{write back} informația e scrisă doar în cache, urmează să fie scrisă în memorie cănd linia e înlocuită. În cazul unui
+înlocuire. Sunt 2 tipuri de strategii de scriere \emph{write through}, informația e scrisă atât în cache cât și în memoria RAM
+și \emph{write back}, informația e scrisă doar în cache, urmează să fie scrisă în memorie cănd linia e înlocuită. În cazul unui
 \emph{cache miss} la scriere blocul poate fi încărcat în cache \emph{write allocate} sau nu \emph{no-write allocate}
 \cite{cache}.
 
 \subsection{Sincronizarea circuitelor cu frecvențe diferite}
 Dacă nu ești tu inginerul care se ocupă de realizarea tuturor componentelor unui sistem atunci cel mai probabil nu toate
-au aceeași frecvență de operare. Chiar dacă ești tot pot să existe motive pentru care asta se întâmplă, cum ar fi
-limitări fizice, reducerea costului sau reducrea consumului de energie, etc. Apare problema de comunicare sincronizată
+au aceeași frecvență de operare. Chiar dacă ești, tot pot să existe motive pentru care asta se întâmplă, cum ar fi
+limitări fizice, reducerea costului sau reducerea consumului de energie, etc. Apare problema de comunicare sincronizată
 între 2 circuite. O soluție la această problemă este \emph{hanshacking}, folosită de altfel și la rețele în protocolul
-\acrshort{tcp}. Implementarea circuitului de sincronizare este redată în figura \ref{fig:handshake} și modul de funcționare.
-în figura \ref{fig:handshake_rules} Mai multe soluții găsiți aici \cite{sync}.
+\acrshort{tcp}. Implementarea circuitului de sincronizare este redată în figura \ref{fig:handshake} și modul de funcționare
+în figura \ref{fig:handshake_rules}. Mai multe soluții găsiți aici \cite{sync}.
 Alte soluții precum \emph{clock domain crossing} sunt amintite și aici \cite{block_memory}.
 
 \begin{figure}[h]

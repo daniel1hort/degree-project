@@ -6,16 +6,16 @@
 \subsection{Considerente generale}
 Proiectul a fost dezvoltat în C, mai exact standard ISO C14. Alegerea nu a fost arbitrară, C este un limbaj de
 programare foarte puternic și capabil. O alternativă luată în considerare a fost C\# dar stilul de programare
-OOP lăsa de dorit și tentația de a complica lucrurile folosind funcționalități de limbaj există.
+OOP lasă de dorit și tentația de a complica lucrurile folosind funcționalități de limbaj există.
 Tipul de \emph{assempler} ales este \emph{two-pass assembler}. Acest tip este mai ușor de înteles și e mai extensibil decât un
-\emph{one-pass asembler}. Asta înseamnă ca execută 2 pași asupra fișierului cu codul sursă. Cei 2 pași au
+\emph{one-pass assembler}. Asta înseamnă că execută 2 pași asupra fișierului cu codul sursă. Cei 2 pași au
 responsabilități diferite.
 
 Primul pas se ocupă de strângerea de informații necesare pentru pasul 2 și de
 transmiterea acestor informații. În mod normal se face printr-un fișier intermediar, în cazul nostru
 fișierul intermediar nu este unul standard. Acesta conține o versiune mai simplă a fișierului sursă
 în loc să conțină una mai complicată. Etichetele și macro-urile găsite în pasul 1 se păstrează în 
-memorie, de unde pasul 2 le accesează. Fișierul intermediar conține o versiune mai curața a fișierului
+memorie, de unde pasul 2 le accesează. Fișierul intermediar conține o versiune mai curată a fișierului
 sursă și macro-urile expandate. Din cauza aceasta opținea de listare a codului final într-un fișier
 nu este posibilă, la pasul 2 nu se știe cum arată fișierul sursă. Toate erorile sunt prinse la pasul 1.
 Pasul 2 traduce efectiv instrucțiunile în cod mașină, executabil de către procesor.
@@ -109,7 +109,7 @@ Pe baza lucrării \cite{asl} a fost luată decizia ca directivele să înceapă 
     Nu are parametrii. Crează un ciclu infinit. Este interpretată în pasul 1 prin expandarea în instrucțiunea 
     \texttt{ZERO ZERO *}.
     \item \verb|<label> .MACRO <p1> <p2> <p3> <p4> <p5>|\\
-    Trebuie să aibă o etichetă ce va acționa drept nume al macro-ului. Poate avea între 0-5 argumente, toate sunt etichete
+    Trebuie să aibă o etichetă ce va acționa drept nume al macro-ului. Poate avea între 0-5 argumente, toate sunt etichete.
     Nu incrementează \acrshort{lc} și nici liniile următoare nu îl incrementează. După această directivă pot să
     urmeze oricâte linii care conțin instrucțiuni, alte directive sau macro-uri. Aceste linii formează corpul
     macro-ului. Este interpretată în pasul 1 prin setarea \allowbreak \texttt{inside\_macro\_definition = true;}
@@ -243,6 +243,7 @@ generează o eroare.
     .DATA 0
 \end{lstlisting}
 
+\clearpage
 \subsection{Raportarea erorilor}
 În limbaj sunt documentate 12 tipuri de erori care pot să apară Acestea sunt:
 \begin{itemize}
@@ -254,7 +255,7 @@ generează o eroare.
     \item \verb|ERROR_INTERNAL_SYMBOL_REDEFINED| -- \verb|ZERO| e singurul simbol de care se ocupă \emph{assembler}-ul, e o etichetă către o zonă de memorie ce mereu conține valoarea 0x00, nu poate fi redefinită
     \item \verb|ERROR_SYMBOL_ZERO_READONLY| -- la adresa simbolului \verb|ZERO| este mereu valoarea 0, nu este permisă schimbarea valorii
     \item \verb|ERROR_MACRO_INSIDE_MACRO| -- un macro nu poate fi definit în interiorul unui macro
-    \item \verb|ERROR_ENDM_OUTSIDE_MACRO| -- \verb|ENDM| trebuie să fie precedat de un \verb|.MACRO|
+    \item \verb|ERROR_ENDM_OUTSIDE_MACRO| -- \verb|.ENDM| trebuie să fie precedat de directiva \verb|.MACRO|
     \item \verb|ERROR_MACRO_NAME_MISSING| -- o linie ce definește un macro trebuie să aibă o etichetă, aceasta devine numele macro-ului
     \item \verb|ERROR_TOO_FEW_ARGUMENTS| -- la folosirea unui macro au fost furnizate prea putine argumente
     \item \verb|ERROR_TOO_MANY_ARGUMENTS| -- la folosirea unui macro au fost furnizate prea multe argumente

@@ -11,7 +11,7 @@ care pe baza codului va genera circuitele și conexiunile dintre ele. E o metod�
 pentru noi dispozitive hardware dar în același timp versiuni ieftine de plăci pot fi folosite în loc de
 proiectarea circuitelor electronice dedicate în anumite produse.
 
-Proiectul coține următoarele circuite ce vor fi explicate în detaliu și care pot fi observate în figura 
+Proiectul conține următoarele circuite ce vor fi explicate în detaliu și care pot fi observate în figura 
 \ref{fig:main_block_diagram}. Pentru simplitate fiecare core al procesorului lucrează cu zone diferite
 de memorie pentru a elimina necesitatea de a implementa coerența memoriei cache, deoarece un core nu va
 modifica date care sunt accesibile de către celălalt core. Acest lucru a fost ușor de realizat, pentru
@@ -32,10 +32,10 @@ procesor a fost adăugat un parametru generic ce reprezintă valoarea inițială
     \label{fig:main_block_diagram}
 \end{figure}
 
-Codul \acrshort{vhdl} cu entitățile circuitelor se află la anexa \ref{appendix:entities}. O entitate e un noțiune \acrshort{vhdl}
-care descrie porturile și pinii unui circuit. Asemenea unei interfețe care poate avea mai multe implementări, o entitate poate
+O entitate e un noțiune \acrshort{vhdl}
+care descrie semnalele unui circuit. Asemenea unei interfețe care poate avea mai multe implementări, o entitate poate
 avea mai multe arhitecturi. Aproape toate entitățile au și parametrii generici pentru a controla ușor numărul liniilor de date,
-numărul liniilor de adresă și dimensiunea memoriilor. Fiecare port sau pin are un prefix în nume pentru a specifica dacă este
+numărul liniilor de adresă și dimensiunea memoriilor. Fiecare semnal are un prefix în nume pentru a specifica dacă este
 de intrare, de ieșire sau de intrare-ieșire.
 
 \subsection{Implementarea procesorului SUBLEQ}
@@ -108,7 +108,7 @@ doar pentru o singură instrucțiune, plus cea de scriere. Pentru simplitate est
 avem un număr arbitrar de linii și o linie are un număr arbitrar de blocuri de dimensiunea unui \emph{cuvânt}.
 Datele dintr-o anumita adresă din memoria de nivel superior, în cazul nostru memoria RAM, pot fi stocate într-o singură
 linie din cache după formula $$LINE = ADR \;\mathrm{mod}\; LINE\_COUNT$$. Din cauza asta performanța este destul de mică și numărul
-de \emph{cache miss}-uri este mai mare decât în cazul celorlate 2 tipuri de mapări.
+de \emph{cache miss}-uri este mai mare decât în cazul celorlaltor 2 tipuri de mapări.
 
 Din cauză că fiecare instrucțiune poate presupune o operație de scriere în memorie, strategia de scriere aleasă a fost
 \emph{write-back} cu \emph{write-allocate}. Scrierea se face doar în cache, iar o linie din cache este scrisă în RAM
@@ -126,7 +126,7 @@ conține diagrama de stare a memoriei cache.
 
 Distingem 4 situații din figura \ref{fig:cache_state}:
 \begin{itemize}
-    \item Linia din care vrem să citim sau sa scriem are tagul invalid, ceea ce înseamnă că încă nu a fost încarcată din memoria RAM
+    \item Linia din care vrem să citim sau să scriem are tagul invalid, ceea ce înseamnă că încă nu a fost încarcată din memoria RAM
     nicio informație utilă, linia respectivă e goală sau contine informație inutilă. Se citește linia din memoria RAM și
     se răspunde cu \emph{cache miss}.
     \item Tagul extras din adresa de la care vrem să citim sau să scriem e diferit de tagul liniei și are \emph{Dirty Flag} setat pe 0,
@@ -184,9 +184,9 @@ Distingem 4 situații din figura \ref{fig:cache_state}:
 
 \subsection{Implementarea celorlaltor circuite}
 \subsubsection{Memoria RAM}
-Memoria RAM servește drept spațiu de stocare principal. Datele sunt încarcate dintr-un fișier binar la începerea
-simulării. Dimensiunea e specificată printr-un parametru generic. Are un singr port, ceea ce înseamna că doar o
-singura operatie, de citire sau scriere, poate fi executată la un moment dat. Citirea e asincronă și de dragul
+Memoria RAM servește drept spațiu de stocare principal. Datele sunt încărcate dintr-un fișier binar la începerea
+simulării. Dimensiunea e specificată printr-un parametru generic. Are un singur port, ceea ce înseamnă că doar o
+singură operație, de citire sau scriere, poate fi executată la un moment dat. Citirea e asincronă și de dragul
 simplității presupunem că are loc destul de repede pentru a fi citită într-un singur ciclu de tact. Scrierea
 e sincronă, se execută doar la semnal de \emph{clock} pe front crescător.
 
@@ -221,7 +221,7 @@ e sincronă, se execută doar la semnal de \emph{clock} pe front crescător.
 
 \subsubsection{Circuit de arbitrare}
 Un singur core poate avea acces la \emph{bus} la un moment dat. Circuitul de arbitrare se asigură de asta. Funcționează pe
-bază de prioritate, înseamnă ca primul core va avea tot timpul acces la \emph{bus} în timp ce al doilea are acces doar dacă
+bază de prioritate, înseamnă că primul core va avea tot timpul acces la \emph{bus} în timp ce al doilea are acces doar dacă
 primul core nu trimite cerere. Este implementat pentru a fi scalabil. Un parametru generic desemnează câte intrări și ieșiri
 are circuitul. În \ref{fig:main_block_diagram} are 2 intrări și ieșiri pentru cele 2 core-uri.
 
@@ -310,15 +310,15 @@ RAM. Explicația pe segmente:
     deoarece linia are 8 blocuri de memorie de dimendiunea unui cuvânt. În tot acest timp se trimite un semnal de
     \emph{cache miss} către procesor, iar el știe să aștepte până la un semnal \emph{cache hit} așa cum apare și în figura
     \ref{fig:cpu_state}.
-    \item Segmentul 2: Aici are loc ultima operație \emph{fetch}, urmată de operație de scădere
+    \item Segmentul 2: Aici are loc ultima operație \emph{fetch}, urmată de operația de scădere.
     \item Segmentul 3: Se execută operația de scriere prin setarea semnalului WE\_CPU pe `1'. Se scrie în aceeași
     locație de unde s-a facut ultima citire, motiv pentru care adresa rămâne aceeași.
     \item Segmentul 4: Procesorul cere datele de la adresa 0x03. Deoarece există doar o linie de cache cu 8 blocuri, asta
-    înseamnă că adresa 0x03 se află în linia ce conține adresele 0x00 - 0x07. Linia curentă e 0x08 - 0xFF, stim asta pentru
+    înseamnă că adresa 0x03 se află în linia ce conține adresele 0x00 - 0x07. Linia curentă e 0x08 - 0xFF, știm asta pentru
     că ultima operație s-a executat pe adresa 0x0A. Se trimite un semnal \emph{cache miss} și pentru că s-a scris în
     linie trebuie să fie scrisă în RAM înainte de a fi înlocuită. Se observă 3 operații complete de scriere și una incompletă
     împreună cu semnalele de sincronizare aferente. În total o singură scriere durează 10 cicluri de tact. În cazul primelor
-    2 scrieri, informația scrisă este aceiași cu cea care exista deja la adresele respective. La a 3-a scriere în RAM este
+    2 scrieri, informația scrisă este aceiași cu cea care exista deja la adresele respective. La a 3-a scriere, în RAM este
     valoarea 0x02 și valoarea scrisă este 0xFE (-2 în complement de 2).
 \end{itemize}
 
