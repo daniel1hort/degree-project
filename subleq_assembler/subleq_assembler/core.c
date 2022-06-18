@@ -633,6 +633,6 @@ void step2(FILE* stream1, FILE* stream2, int file_size, int word_size) {
 	line_init(&line);
 	line.type = LINE_DIRECTIVE;
 	line.directive = DIRECTIVE_ORG;
-	param_set_value(line.params + 0, file_size - 1);
+	param_set_value(line.params + 0, (!file_size?file_size:(file_size - 1)));
 	line_parse(line, word_size, stream2);
 }
